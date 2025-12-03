@@ -1,0 +1,153 @@
+# Template: tracks.yml
+# Mapeamento de ValueTracks → Features BDD → Métricas
+
+tracks:
+  # ===========================
+  # VALUE TRACKS
+  # ===========================
+  # Comportamentos que entregam impacto direto ao usuário
+
+  - id: value_[dominio]_[capacidade]
+    type: VALUE
+    name: "[Nome descritivo do track]"
+    owner: "[Time ou pessoa responsável]"
+    metrics:
+      - [metrica_1]          # Descrição: [como medir]
+      - [metrica_2]          # Descrição: [como medir]
+      - [metrica_3]          # Descrição: [como medir]
+    features:
+      - specs/bdd/[prefixo]_[dominio]/[feature1].feature
+      - specs/bdd/[prefixo]_[dominio]/[feature2].feature
+    notes: "[Contexto, justificativa ou links relacionados]"
+
+  # Exemplo concreto:
+  - id: value_forge_chat_baseline
+    type: VALUE
+    name: "Chat básico multi-provedor (Forge SDK)"
+    owner: "Time de Produto"
+    metrics:
+      - adocao_dev           # nº de desenvolvedores usando
+      - tempo_integracao     # tempo até primeiro chat funcionar (< 10min)
+      - nps_sdk              # satisfação dos desenvolvedores (> 8/10)
+    features:
+      - specs/bdd/10_forge_core/chat.feature
+      - specs/bdd/10_forge_core/config.feature
+    notes: "Baseline mínimo viável. Sem isso, o produto não existe."
+
+  # ===========================
+  # SUPPORT TRACKS
+  # ===========================
+  # Comportamentos que garantem qualidade, confiabilidade ou habilitação técnica
+
+  - id: support_[categoria]_[capacidade]
+    type: SUPPORT
+    name: "[Nome descritivo do track]"
+    owner: "[Time ou pessoa responsável]"
+    metrics:
+      - [metrica_qualidade_1]    # Confiabilidade, performance, etc
+      - [metrica_qualidade_2]
+    features:
+      - specs/bdd/[prefixo]_[dominio]/[feature].feature
+    notes: "[Por que este SUPPORT é necessário? Qual VALUE ele habilita?]"
+
+  # Exemplo concreto:
+  - id: support_context_session
+    type: SUPPORT
+    name: "Gestão de contexto e sessões"
+    owner: "Time de Engenharia"
+    metrics:
+      - confiabilidade       # % sessões preservadas corretamente (> 99%)
+      - consistencia         # ausência de vazamento entre sessões (0 falhas)
+      - latencia_contexto    # tempo para recuperar histórico (< 100ms)
+    features:
+      - specs/bdd/10_forge_core/sessao.feature
+    notes: "Habilita chat multi-turn. Crítico para VALUE tracks avançados."
+
+
+# GUIA DE PREENCHIMENTO
+
+# ===========================
+# Campos Obrigatórios
+# ===========================
+
+# id (string):
+#   - Identificador único em snake_case
+#   - Convenção VALUE: value_[dominio]_[capacidade]
+#   - Convenção SUPPORT: support_[categoria]_[capacidade]
+
+# type (VALUE | SUPPORT):
+#   - VALUE: Impacto direto no usuário final
+#   - SUPPORT: Qualidade/confiabilidade que sustenta VALUE
+
+# name (string):
+#   - Título legível para humanos (max 50 caracteres)
+#   - Descreve o que é entregue, não como
+
+# owner (string):
+#   - Responsável pelo track (pessoa, time ou área)
+
+# metrics (array de strings):
+#   - Métricas mensuráveis que comprovam sucesso
+#   - VALUE: impacto de negócio (adoção, conversão, NPS)
+#   - SUPPORT: qualidade (confiabilidade, performance, cobertura)
+
+# features (array de caminhos):
+#   - Caminho relativo a partir de specs/bdd/
+#   - Uma feature pode estar em múltiplos tracks
+
+# ===========================
+# Campos Opcionais
+# ===========================
+
+# notes (string):
+#   - Contexto adicional, justificativa, links
+#   - Por que este track é importante?
+#   - Como se relaciona com outros tracks?
+
+
+# EXEMPLOS DE MÉTRICAS
+
+# VALUE Tracks (impacto no usuário):
+#   - adocao_dev: nº de desenvolvedores usando
+#   - tempo_primeira_integracao: tempo até primeiro chat funcionar
+#   - nps_sdk: satisfação (0-10)
+#   - taxa_conversao: % usuários que completam onboarding
+#   - retencao: % usuários ativos após 30 dias
+
+# SUPPORT Tracks (qualidade técnica):
+#   - confiabilidade: % operações bem-sucedidas
+#   - disponibilidade: % uptime
+#   - latencia: tempo de resposta (P50, P95, P99)
+#   - cobertura: % features cobertas por testes
+#   - taxa_erro: % requisições com erro
+#   - taxa_fallback: % casos usando fallback (meta: < 5%)
+
+
+# RASTREABILIDADE
+
+# Como usar este arquivo:
+
+# 1. Durante desenvolvimento:
+#    $ yq '.tracks[] | select(.id == "value_forge_chat_baseline")' tracks.yml
+
+# 2. Para encontrar features de um track:
+#    $ yq '.tracks[] | select(.id == "...")  | .features[]' tracks.yml
+
+# 3. Para listar todos os VALUE tracks:
+#    $ yq '.tracks[] | select(.type == "VALUE") | .name' tracks.yml
+
+# 4. Para validar sintaxe:
+#    $ yq eval tracks.yml
+
+
+# VALIDAÇÃO
+
+# Checklist antes de commitar:
+#   - [ ] Sintaxe YAML válida (yq eval tracks.yml)
+#   - [ ] Todos os ids únicos
+#   - [ ] Todos os tracks têm type (VALUE ou SUPPORT)
+#   - [ ] Todos os tracks têm pelo menos 1 métrica
+#   - [ ] Todos os tracks têm pelo menos 1 feature
+#   - [ ] Todos os caminhos de features existem
+#   - [ ] Owners definidos
+#   - [ ] Separação clara VALUE vs SUPPORT

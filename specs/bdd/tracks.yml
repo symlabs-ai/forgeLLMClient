@@ -1,0 +1,112 @@
+# Mapeamento de Features BDD → ValueTracks do MDD
+# ForgeLLMClient - MVP Fase 1
+# Data: 2025-12-03
+
+tracks:
+  # ============================================================
+  # VALUE TRACKS - Entregam valor direto ao usuario
+  # ============================================================
+
+  - id: portable_chat
+    type: VALUE
+    name: "Chat Portavel (PortableChat)"
+    description: "Enviar mensagens para qualquer LLM com interface unica"
+    owner: "Product Owner"
+    metrics:
+      - tempo_migracao_provedor: "< 1 hora"
+      - linhas_codigo_alteradas: "< 10 ao trocar provedor"
+    features:
+      - specs/bdd/10_forge_core/chat.feature
+      - specs/bdd/10_forge_core/config.feature
+      - specs/bdd/10_forge_core/response.feature
+
+  - id: unified_tools
+    type: VALUE
+    name: "Tool Calling Unificado (UnifiedTools)"
+    description: "Tool Calling padronizado entre provedores"
+    owner: "Product Owner"
+    metrics:
+      - retrabalho_troca_provedor: "0 horas"
+      - formato_consistente: "100% dos provedores"
+    features:
+      - specs/bdd/10_forge_core/tools.feature
+
+  # ============================================================
+  # SUPPORT TRACKS - Sustentacao tecnica
+  # ============================================================
+
+  - id: token_usage
+    type: SUPPORT
+    name: "Consumo de Tokens (TokenUsage)"
+    description: "Informar consumo de tokens em cada requisicao"
+    owner: "Engineering"
+    metrics:
+      - precisao_contagem: ">= 95%"
+      - disponibilidade: "100% das respostas"
+    features:
+      - specs/bdd/10_forge_core/tokens.feature
+    supports:
+      - portable_chat
+
+  - id: provider_normalization
+    type: SUPPORT
+    name: "Normalizacao de Provedores"
+    description: "Formato de resposta unificado entre provedores"
+    owner: "Engineering"
+    metrics:
+      - campos_consistentes: "100%"
+      - tipos_consistentes: "100%"
+    features:
+      - specs/bdd/10_forge_core/response.feature
+    supports:
+      - portable_chat
+      - unified_tools
+
+  - id: openai_provider
+    type: SUPPORT
+    name: "Provedor OpenAI"
+    description: "Integracao com API da OpenAI"
+    owner: "Engineering"
+    metrics:
+      - modelos_suportados: "gpt-4, gpt-3.5-turbo"
+      - features_suportadas: "chat, streaming, tools"
+    features:
+      - specs/bdd/30_providers/openai.feature
+    supports:
+      - portable_chat
+      - unified_tools
+
+  - id: anthropic_provider
+    type: SUPPORT
+    name: "Provedor Anthropic"
+    description: "Integracao com API da Anthropic"
+    owner: "Engineering"
+    metrics:
+      - modelos_suportados: "claude-3-sonnet, claude-3-5-sonnet"
+      - features_suportadas: "chat, streaming, tools"
+    features:
+      - specs/bdd/30_providers/anthropic.feature
+    supports:
+      - portable_chat
+      - unified_tools
+
+# ============================================================
+# RESUMO
+# ============================================================
+
+summary:
+  total_tracks: 6
+  value_tracks: 2
+  support_tracks: 4
+  total_features: 7
+  total_scenarios: 37
+  phase: "MVP Fase 1"
+
+# ============================================================
+# RASTREABILIDADE MDD → BDD
+# ============================================================
+
+mdd_references:
+  visao: "docs/visao.md"
+  aprovacao: "docs/aprovacao_mvp.md"
+  behavior_mapping: "specs/bdd/drafts/behavior_mapping.md"

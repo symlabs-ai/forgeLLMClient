@@ -1,0 +1,406 @@
+# MDD - Market Driven Development
+# Subprocesso do ForgeProcess
+# Gerado automaticamente - v2.1
+
+id: mdd
+version: "1.0.0"
+title: "MDD - Market Driven Development"
+description: "Processo de validação de mercado que transforma hipóteses em produtos validados através de artefatos Markdown versionáveis."
+
+is_sub_phase: true
+parent_phase: "forgeprocess.mdd"
+
+narrative: |
+  O Market Driven Development (MDD) é uma metodologia de desenvolvimento de produtos
+  guiada por sinais reais de mercado, não por suposições internas.
+
+  Cada ciclo do MDD transforma uma hipótese em um produto validado, por meio de
+  artefatos simples, versionáveis e legíveis em Markdown (.md).
+
+  Todos os documentos em .md são a fonte da verdade — PDFs, slides e sites são
+  projeções renderizadas desses arquivos.
+
+phases:
+  - id: mdd_main
+    title: "Market Driven Development"
+    narrative: "Validação de mercado em 6 etapas: Visão → Síntese → Pitch → Validação → Avaliação → Handoff BDD"
+    spec_file: "MDD_process.md"
+
+    symbiotes:
+      - name: mdd_coach
+        role: "Guia o ciclo MDD, ajuda na criação de artefatos e avalia qualidade"
+        prompt_file: "../symbiotes/mdd_coach/prompt.md"
+        can_decide: false
+
+    steps:
+      - id: etapa_01_concepcao
+        title: "Etapa 01 - Concepção da Visão"
+        narrative: |
+          A partir de uma hipótese inicial, cria-se uma visão clara e inspiradora do produto.
+          É o momento de formular propósito, problema de mercado, proposta de valor
+          e a métrica inicial de validação.
+        spec_file: "etapa_01.md"
+        inputs:
+          - path: "docs/hipotese.md"
+            description: "Hipótese inicial do produto"
+            template: "templates/template_hipotese.md"
+        outputs:
+          - path: "docs/visao.md"
+            description: "Documento de visão do produto"
+            template: "templates/template_visao.md"
+        actors:
+          - type: symbiota
+            name: mdd_coach
+            role: "Facilita a criação da visão"
+          - type: humano
+            name: product_owner
+            role: "Define e valida a visão"
+
+      - id: etapa_02_sintese
+        title: "Etapa 02 - Síntese Executiva"
+        narrative: |
+          Transforma a visão em um plano estratégico conciso, articulando oportunidade,
+          tamanho/potência de mercado, modelo de negócio e roadmap inicial.
+          Base para discussão com fundadores, diretoria e investidores.
+        spec_file: "etapa_02.md"
+        inputs:
+          - path: "docs/visao.md"
+            description: "Documento de visão aprovado"
+            template: "templates/template_visao.md"
+        outputs:
+          - path: "docs/sumario_executivo.md"
+            description: "Sumário executivo do produto"
+            template: "templates/template_sumario_executivo.md"
+          - path: "output/docs/sumario_executivo.pdf"
+            description: "PDF renderizado do sumário"
+            required: false
+            source: "docs/sumario_executivo.md"
+            producer:
+              type: symbiote
+              name: mdd_publisher
+        actors:
+          - type: symbiota
+            name: mdd_coach
+            role: "Estrutura o sumário executivo"
+          - type: humano
+            name: product_owner
+            role: "Valida estratégia e modelo de negócio"
+
+      - id: etapa_03_pitch
+        title: "Etapa 03 - Pitch de Valor"
+        narrative: |
+          Converte o sumário em narrativa visual e emocional para investidores/parceiros.
+          O original permanece em Markdown; o .pptx é gerado por ferramenta externa.
+        spec_file: "etapa_03.md"
+        inputs:
+          - path: "docs/visao.md"
+            description: "Documento de visão"
+            template: "templates/template_visao.md"
+          - path: "docs/sumario_executivo.md"
+            description: "Sumário executivo"
+            template: "templates/template_sumario_executivo.md"
+        outputs:
+          - path: "docs/pitch_deck.md"
+            description: "Pitch deck em Markdown"
+            template: "templates/template_pitch_deck.md"
+          - path: "output/docs/pitch_deck.pptx"
+            description: "Apresentação renderizada"
+            required: false
+            source: "docs/pitch_deck.md"
+            producer:
+              type: symbiote
+              name: mdd_publisher
+        actors:
+          - type: symbiota
+            name: mdd_coach
+            role: "Estrutura a narrativa do pitch"
+          - type: humano
+            name: product_owner
+            role: "Define mensagens-chave"
+
+      - id: etapa_04_validacao
+        title: "Etapa 04 - Validação Pública Inicial"
+        narrative: |
+          Criação de landing pages experimentais para validar interesse real do público.
+          Cada variação (A/B/C) ajusta narrativa, promessa e CTA.
+          Páginas são convertidas em HTML para testes.
+        spec_file: "etapa_04.md"
+        inputs:
+          - path: "docs/visao.md"
+            description: "Documento de visão"
+            template: "templates/template_visao.md"
+          - path: "docs/sumario_executivo.md"
+            description: "Sumário executivo"
+            template: "templates/template_sumario_executivo.md"
+          - path: "docs/pitch_deck.md"
+            description: "Pitch deck"
+            template: "templates/template_pitch_deck.md"
+        outputs:
+          - path: "docs/sites/site_A.md"
+            description: "Landing page variação A"
+            template: "templates/template_site.md"
+          - path: "output/docs/sites/site_A.html"
+            description: "Landing page A renderizada em HTML"
+            required: false
+            source: "docs/sites/site_A.md"
+            producer:
+              type: symbiote
+              name: mdd_publisher
+          - path: "docs/sites/site_B.md"
+            description: "Landing page variação B"
+            template: "templates/template_site.md"
+          - path: "output/docs/sites/site_B.html"
+            description: "Landing page B renderizada em HTML"
+            required: false
+            source: "docs/sites/site_B.md"
+            producer:
+              type: symbiote
+              name: mdd_publisher
+          - path: "docs/sites/site_C.md"
+            description: "Landing page variação C"
+            template: "templates/template_site.md"
+          - path: "output/docs/sites/site_C.html"
+            description: "Landing page C renderizada em HTML"
+            required: false
+            source: "docs/sites/site_C.md"
+            producer:
+              type: symbiote
+              name: mdd_publisher
+          - path: "docs/resultados_validacao.md"
+            description: "Resultados coletados dos testes"
+            template: "templates/template_resultados_validacao.md"
+          - path: "output/docs/resultados_validacao.html"
+            description: "Resultados de validação renderizados em HTML"
+            required: false
+            source: "docs/resultados_validacao.md"
+            producer:
+              type: symbiote
+              name: mdd_publisher
+        actors:
+          - type: symbiota
+            name: mdd_coach
+            role: "Sugere variações e analisa métricas"
+          - type: humano
+            name: product_owner
+            role: "Define hipóteses de teste"
+
+      - id: etapa_05_avaliacao
+        title: "Etapa 05 - Avaliação Estratégica"
+        narrative: |
+          Etapa de reflexão simbiótica: análise de dados dos sites/formulários
+          e decisão sobre próximo passo: aprovar, revisar ou encerrar.
+          Fecha o ciclo atual e pode iniciar um novo.
+        spec_file: "etapa_05.md"
+        inputs:
+          - path: "docs/resultados_validacao.md"
+            description: "Resultados da validação pública"
+            template: "templates/template_resultados_validacao.md"
+        outputs:
+          - path: "docs/aprovacao_mvp.md"
+            description: "Documento de aprovação (se aprovado)"
+            template: "templates/template_aprovacao_mvp.md"
+            required: false
+          - path: "docs/revisao_estrategica.md"
+            description: "Documento de revisão (se precisa ajustes)"
+            template: "templates/template_revisao_estrategica.md"
+            required: false
+          - path: "docs/rejeicao_projeto.md"
+            description: "Documento de rejeição (se encerrado)"
+            template: "templates/template_rejeicao_projeto.md"
+            required: false
+        actors:
+          - type: humano
+            name: stakeholder
+            role: "Toma decisão final sobre o projeto"
+          - type: symbiota
+            name: mdd_coach
+            role: "Apresenta análise e recomendações"
+
+      - id: etapa_06_handoff
+        title: "Etapa 06 - Handoff para BDD"
+        narrative: |
+          Com a validação de mercado e a aprovação do MVP, o ciclo MDD é concluído.
+          O controle é formalmente transferido para o BDD Process, que usará a visão
+          e a aprovação como base para detalhar os comportamentos do sistema.
+          O MDD não cria especificações BDD; ele autoriza sua criação.
+        spec_file: "etapa_06.md"
+        inputs:
+          - path: "docs/aprovacao_mvp.md"
+            description: "Documento de aprovação do MVP"
+            template: "templates/template_aprovacao_mvp.md"
+        outputs:
+          - path: "docs/handoff_bdd.md"
+            description: "Documento formal de handoff para BDD"
+            template: "templates/template_handoff_bdd.md"
+            required: false
+        actors:
+          - type: symbiota
+            name: mdd_coach
+            role: "Prepara documentação de handoff"
+          - type: humano
+            name: product_owner
+            role: "Valida e autoriza início do BDD"
+
+flow:
+  - id: start
+    type: start
+    next: etapa_01
+
+  # ========== ETAPA 01: Concepção da Visão ==========
+  - id: etapa_01
+    type: step
+    step_ref: mdd_main.etapa_01_concepcao
+    next: validar_visao
+
+  - id: validar_visao
+    type: decision
+    decision:
+      question: "A visão do produto (docs/visao.md) está aprovada?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: etapa_02
+        - when: "needs_revision"
+          goto: etapa_01
+
+  # ========== ETAPA 02: Síntese Executiva ==========
+  - id: etapa_02
+    type: step
+    step_ref: mdd_main.etapa_02_sintese
+    next: validar_sintese
+
+  - id: validar_sintese
+    type: decision
+    decision:
+      question: "A síntese executiva (docs/sumario_executivo.md) está aprovada?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: etapa_03
+        - when: "needs_revision"
+          goto: etapa_02
+
+  # ========== ETAPA 03: Pitch de Valor ==========
+  - id: etapa_03
+    type: step
+    step_ref: mdd_main.etapa_03_pitch
+    next: validar_pitch
+
+  - id: validar_pitch
+    type: decision
+    decision:
+      question: "O pitch deck (docs/pitch_deck.md) está aprovado?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: etapa_04
+        - when: "needs_revision"
+          goto: etapa_03
+
+  # ========== ETAPA 04: Validação Pública ==========
+  - id: etapa_04
+    type: step
+    step_ref: mdd_main.etapa_04_validacao
+    next: validar_landing_pages
+
+  - id: validar_landing_pages
+    type: decision
+    decision:
+      question: "As landing pages e resultados de validação estão prontos para avaliação final?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: etapa_05
+        - when: "needs_revision"
+          goto: etapa_04
+
+  # ========== ETAPA 05: Avaliação Estratégica ==========
+  - id: etapa_05
+    type: step
+    step_ref: mdd_main.etapa_05_avaliacao
+    next: decisao_mvp
+
+  - id: decisao_mvp
+    type: decision
+    decision:
+      question: "Qual o resultado da avaliação estratégica do MVP?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: etapa_06
+        - when: "needs_revision"
+          goto: etapa_01
+        - when: "rejected"
+          goto: return_rejected
+
+  # ========== ETAPA 06: Handoff para BDD ==========
+  - id: etapa_06
+    type: step
+    step_ref: mdd_main.etapa_06_handoff
+    next: return_approved
+
+  - id: return_approved
+    type: return
+    return_status: "approved"
+
+  - id: return_rejected
+    type: return
+    return_status: "rejected"
+
+artifacts:
+  - id: hipotese
+    path: "docs/hipotese.md"
+    phase: mdd_main
+    description: "Hipótese inicial do produto"
+
+  - id: visao
+    path: "docs/visao.md"
+    phase: mdd_main
+    description: "Documento de visão do produto"
+
+  - id: sumario_executivo
+    path: "docs/sumario_executivo.md"
+    phase: mdd_main
+    description: "Síntese executiva estratégica"
+
+  - id: pitch_deck
+    path: "docs/pitch_deck.md"
+    phase: mdd_main
+    description: "Pitch de valor para investidores"
+
+  - id: resultados_validacao
+    path: "docs/resultados_validacao.md"
+    phase: mdd_main
+    description: "Resultados da validação pública"
+
+  - id: aprovacao_mvp
+    path: "docs/aprovacao_mvp.md"
+    phase: mdd_main
+    description: "Documento de aprovação do MVP"
+
+  - id: handoff_bdd
+    path: "docs/handoff_bdd.md"
+    phase: mdd_main
+    description: "Documento formal de handoff para BDD Process"
+
+symbiotes:
+  - name: mdd_coach
+    role: "Coach do processo MDD"
+    prompt_file: "../symbiotes/mdd_coach/prompt.md"
+    capabilities:
+      - criar_visao
+      - estruturar_sumario
+      - elaborar_pitch
+      - analisar_metricas
+      - recomendar_decisao
+    can_decide: false

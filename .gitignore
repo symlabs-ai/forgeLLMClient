@@ -1,0 +1,7 @@
+.venv/
+temp/
+__pycache__/
+*.pyc
+*.pyo
+docs/pitch_deck.pdf
+docs/site_forgellmclient.pdf

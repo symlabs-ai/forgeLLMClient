@@ -1,0 +1,278 @@
+# Roadmap Planning Process
+# Sub-subprocesso do Execution
+# Gerado automaticamente - v2.1
+
+id: roadmap_planning
+version: "0.1.0"
+title: "Roadmap Planning"
+description: "Fase de planejamento executivo que transforma features Gherkin em backlog sequencial e executável."
+
+is_sub_phase: true
+parent_phase: "execution.roadmap_planning"
+
+narrative: |
+  O Roadmap Planning responde:
+  - QUANDO cada feature será implementada?
+  - EM QUE ORDEM as tarefas devem ser executadas?
+  - QUANTO ESFORÇO cada item demanda?
+  - QUEM é responsável por cada track?
+  - COMO medir progresso?
+
+  BDD (O QUÊ fazer) → ROADMAP PLANNING (QUANDO/COMO) → TDD (Implementar)
+
+phases:
+  - id: planning_main
+    title: "Roadmap Planning"
+    narrative: "Do comportamento especificado ao backlog executável"
+    spec_file: "ROADMAP_PLANNING_PROCESS.md"
+
+    steps:
+      - id: etapa_00_validacao_stakeholder
+        title: "Etapa 00 - Validação Arquitetural com Stakeholders"
+        narrative: |
+          Apresentar propostas técnicas e obter validação/aprovação ANTES de
+          tomar decisões definitivas. Criar questionário de validação arquitetural.
+        inputs:
+          - path: "docs/visao.md"
+            description: "Visão do produto"
+          - path: "specs/bdd/*.feature"
+            description: "Features BDD"
+          - path: "specs/bdd/tracks.yml"
+            description: "ValueTracks e métricas"
+        outputs:
+          - path: "specs/roadmap/ARCHITECTURAL_QUESTIONNAIRE.md"
+            description: "Questionário de validação"
+          - path: "specs/roadmap/ARCHITECTURAL_DECISIONS_APPROVED.md"
+            description: "Decisões aprovadas pelo stakeholder"
+        actors:
+          - type: symbiota
+            name: roadmap_coach
+            role: "Analisa requisitos e propõe alternativas"
+          - type: humano
+            name: stakeholder
+            role: "Aprova decisões arquiteturais"
+
+      - id: etapa_01_arquitetura_stack
+        title: "Etapa 01 - Definição Arquitetural e Stack (ADR)"
+        narrative: |
+          Documentar decisões técnicas aprovadas em formato ADR.
+          Definir stack tecnológico completo.
+          Criar diagramas HLD e LLD.
+        inputs:
+          - path: "specs/roadmap/ARCHITECTURAL_DECISIONS_APPROVED.md"
+            description: "Decisões aprovadas"
+        outputs:
+          - path: "specs/roadmap/TECH_STACK.md"
+            description: "Stack tecnológico completo"
+          - path: "specs/roadmap/ADR.md"
+            description: "Índice de ADRs"
+          - path: "specs/roadmap/adr/*.md"
+            description: "ADRs individuais"
+          - path: "specs/roadmap/HLD.md"
+            description: "High Level Design"
+          - path: "specs/roadmap/LLD.md"
+            description: "Low Level Design"
+        actors:
+          - type: symbiota
+            name: roadmap_coach
+            role: "Documenta decisões e cria diagramas"
+          - type: humano
+            name: tech_lead
+            role: "Valida arquitetura"
+
+      - id: etapa_02_dependencias
+        title: "Etapa 02 - Análise de Dependências"
+        narrative: |
+          Identificar quais features dependem de outras.
+          Definir ordem técnica obrigatória.
+          Criar grafo de dependências.
+        inputs:
+          - path: "specs/bdd/tracks.yml"
+            description: "Mapeamento de tracks"
+          - path: "specs/bdd/**/*.feature"
+            description: "Features BDD"
+        outputs:
+          - path: "specs/roadmap/dependency_graph.md"
+            description: "Grafo de dependências (Mermaid)"
+        actors:
+          - type: symbiota
+            name: roadmap_coach
+            role: "Analisa dependências técnicas"
+
+      - id: etapa_03_quebra_features
+        title: "Etapa 03 - Quebra de Features"
+        narrative: |
+          Dividir features grandes (> 3 cenários ou > 5 dias) em tarefas implementáveis.
+          Manter rastreabilidade TASK → FEATURE.
+        inputs:
+          - path: "specs/bdd/**/*.feature"
+            description: "Features BDD"
+          - path: "specs/roadmap/dependency_graph.md"
+            description: "Grafo de dependências"
+        outputs:
+          - path: "specs/roadmap/feature_breakdown.md"
+            description: "Quebra de features em tarefas"
+        actors:
+          - type: symbiota
+            name: roadmap_coach
+            role: "Granulariza features"
+
+      - id: etapa_04_estimativa_priorizacao
+        title: "Etapa 04 - Estimativa e Priorização"
+        narrative: |
+          Estimar esforço de cada item (XS/S/M/L/XL).
+          Ordenar por dependências, valor de negócio e risco.
+          Definir sprints/fases com critérios de conclusão.
+        inputs:
+          - path: "specs/roadmap/feature_breakdown.md"
+            description: "Features quebradas"
+          - path: "specs/roadmap/dependency_graph.md"
+            description: "Dependências"
+        outputs:
+          - path: "specs/roadmap/estimates.yml"
+            description: "Estimativas de esforço"
+        actors:
+          - type: symbiota
+            name: roadmap_coach
+            role: "Estima e prioriza"
+          - type: humano
+            name: tech_lead
+            role: "Valida estimativas"
+
+      - id: etapa_05_roadmap_backlog
+        title: "Etapa 05 - Criação do Roadmap e Backlog"
+        narrative: |
+          Gerar ROADMAP.md (visão executiva) e BACKLOG.md (guia operacional).
+          Documentar riscos, mitigações e critérios de conclusão.
+        inputs:
+          - path: "specs/roadmap/estimates.yml"
+            description: "Estimativas"
+          - path: "specs/roadmap/dependency_graph.md"
+            description: "Dependências"
+        outputs:
+          - path: "specs/roadmap/ROADMAP.md"
+            description: "Visão executiva (timeline, marcos)"
+          - path: "specs/roadmap/BACKLOG.md"
+            description: "Backlog detalhado (tarefas priorizadas)"
+        actors:
+          - type: symbiota
+            name: roadmap_coach
+            role: "Gera documentação"
+          - type: humano
+            name: stakeholder
+            role: "Aprova roadmap"
+
+flow:
+  - id: start
+    type: start
+    next: etapa_00
+
+  - id: etapa_00
+    type: step
+    step_ref: planning_main.etapa_00_validacao_stakeholder
+    next: decisao_aprovacao_arquitetura
+
+  - id: decisao_aprovacao_arquitetura
+    type: decision
+    decision:
+      question: "Propostas arquiteturais aprovadas pelo stakeholder?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: etapa_01
+        - when: "needs_revision"
+          goto: etapa_00
+        - when: "needs_bdd_revision"
+          goto: return_needs_bdd
+
+  - id: etapa_01
+    type: step
+    step_ref: planning_main.etapa_01_arquitetura_stack
+    next: etapa_02
+
+  - id: etapa_02
+    type: step
+    step_ref: planning_main.etapa_02_dependencias
+    next: etapa_03
+
+  - id: etapa_03
+    type: step
+    step_ref: planning_main.etapa_03_quebra_features
+    next: etapa_04
+
+  - id: etapa_04
+    type: step
+    step_ref: planning_main.etapa_04_estimativa_priorizacao
+    next: etapa_05
+
+  - id: etapa_05
+    type: step
+    step_ref: planning_main.etapa_05_roadmap_backlog
+    next: decisao_aprovacao_roadmap
+
+  - id: decisao_aprovacao_roadmap
+    type: decision
+    decision:
+      question: "Roadmap e backlog aprovados para iniciar implementação?"
+      decider:
+        type: hil
+        actor: tech_lead
+      branches:
+        - when: "approved"
+          goto: return_complete
+        - when: "needs_revision"
+          goto: etapa_04
+
+  - id: return_complete
+    type: return
+    return_status: "complete"
+
+  - id: return_needs_bdd
+    type: return
+    return_status: "needs_bdd_revision"
+
+artifacts:
+  - id: tech_stack
+    path: "specs/roadmap/TECH_STACK.md"
+    phase: planning_main
+    description: "Stack tecnológico completo"
+
+  - id: adr_index
+    path: "specs/roadmap/ADR.md"
+    phase: planning_main
+    description: "Índice de Architecture Decision Records"
+
+  - id: hld
+    path: "specs/roadmap/HLD.md"
+    phase: planning_main
+    description: "High Level Design"
+
+  - id: lld
+    path: "specs/roadmap/LLD.md"
+    phase: planning_main
+    description: "Low Level Design"
+
+  - id: roadmap
+    path: "specs/roadmap/ROADMAP.md"
+    phase: planning_main
+    description: "Visão executiva do projeto"
+
+  - id: backlog
+    path: "specs/roadmap/BACKLOG.md"
+    phase: planning_main
+    description: "Backlog detalhado de implementação"
+
+symbiotes:
+  - name: roadmap_coach
+    role: "Coach do processo de Roadmap Planning"
+    prompt_file: "../../symbiotes/roadmap_coach/prompt.md"
+    capabilities:
+      - analisar_requisitos
+      - propor_arquitetura
+      - criar_adrs
+      - analisar_dependencias
+      - estimar_esforco
+      - gerar_backlog
+    can_decide: false

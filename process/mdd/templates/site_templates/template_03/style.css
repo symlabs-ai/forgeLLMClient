@@ -1,0 +1,295 @@
+/* Template 03: Design focado em PROVA SOCIAL (credibilidade, casos de sucesso) */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    line-height: 1.6;
+    color: #2c3e50;
+    background: #fafafa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Hero Section - Tom de credibilidade e confiança */
+.hero-social {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    padding: 80px 20px 60px;
+    text-align: center;
+}
+
+.trust-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.hero-social h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.hero-social .subtitle {
+    font-size: 1.3rem;
+    opacity: 0.95;
+    max-width: 700px;
+    margin: 0 auto 3rem;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    flex-wrap: wrap;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Testimonials Section */
+.testimonials-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.testimonials-section h2 {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 3rem;
+    color: #2c3e50;
+}
+
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.testimonial-card {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 12px;
+    border-left: 4px solid #4a90e2;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.quote {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+}
+
+.author {
+    display: flex;
+    flex-direction: column;
+}
+
+.author strong {
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.author span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Case Studies */
+.case-studies {
+    padding: 80px 20px;
+    background: #fafafa;
+}
+
+.case-studies h2 {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.cases-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.case-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.case-card h3 {
+    font-size: 1.5rem;
+    color: #4a90e2;
+    margin-bottom: 1rem;
+}
+
+.case-result {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #27ae60;
+    margin-bottom: 1rem;
+}
+
+.case-detail {
+    color: #666;
+    line-height: 1.8;
+}
+
+/* Logos Section */
+.logos-section {
+    padding: 60px 20px;
+    background: white;
+    text-align: center;
+}
+
+.logos-title {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    flex-wrap: wrap;
+}
+
+.logos span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ccc;
+    padding: 15px 25px;
+    border: 2px solid #eee;
+    border-radius: 8px;
+}
+
+/* CTA Section */
+.cta-section {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.cta-section h2 {
+    font-size: 2.8rem;
+    margin-bottom: 1rem;
+}
+
+.cta-section p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.signup-form {
+    max-width: 550px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    gap: 10px;
+}
+
+.signup-form input {
+    flex: 1;
+    padding: 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+}
+
+.btn-cta {
+    background: #4a90e2;
+    color: white;
+    padding: 18px 45px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.3s;
+    white-space: nowrap;
+}
+
+.btn-cta:hover {
+    background: #357abd;
+}
+
+.social-proof {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin-top: 1rem;
+}
+
+footer {
+    background: #1a1a1a;
+    color: #aaa;
+    text-align: center;
+    padding: 25px;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .hero-social h1 {
+        font-size: 2rem;
+    }
+
+    .stats {
+        gap: 30px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    .signup-form {
+        flex-direction: column;
+    }
+
+    .testimonials-grid,
+    .cases-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cases-grid {
+        gap: 25px;
+    }
+}

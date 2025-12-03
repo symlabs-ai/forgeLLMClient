@@ -1,0 +1,96 @@
+# Delivery Process
+# Subprocesso do ForgeProcess que orquestra Sprint + Review
+# Gerado automaticamente - v2.1
+
+id: delivery
+version: "0.1.0"
+title: "Delivery - Sprint Management + Review"
+description: "Macro-processo que organiza trabalho em sprints, conduz cerimônias de review e conecta incrementos às entregas."
+
+is_sub_phase: true
+parent_phase: "forgeprocess.delivery"
+
+narrative: |
+  O Delivery Process:
+  - Organiza o trabalho em sprints e sessões
+  - Conduz as cerimônias de review (técnico, processo e negócio)
+  - Conecta o incremento pronto às entregas (deploy) e ao monitoramento contínuo
+
+  Execution (código testado) → Delivery (sprints + review) → Deploy + Monitoramento
+
+subprocesses:
+  - id: sprint
+    path: "sprint/PROCESS.yml"
+    description: "Organização do trabalho em sprints e sessões"
+    expected_returns:
+      - session_complete
+      - blocked
+
+  - id: review
+    path: "review/PROCESS.yml"
+    description: "Validação técnica, de processo e de negócio"
+    expected_returns:
+      - approved
+      - needs_fixes
+      - needs_revision
+
+phases:
+  - id: delivery_overview
+    title: "Delivery Overview"
+    narrative: "Orquestração de Sprint e Review"
+    spec_file: "PROCESS.md"
+    steps:
+      - id: coordination
+        title: "Coordenação de Sprints e Reviews"
+        narrative: "Gerenciar ciclos de sprint e cerimônias de review"
+
+flow:
+  - id: start
+    type: start
+    next: call_sprint
+
+  - id: call_sprint
+    type: call
+    subprocess_id: sprint
+    on_return:
+      session_complete: call_review
+      blocked: return_needs_revision
+
+  - id: call_review
+    type: call
+    subprocess_id: review
+    on_return:
+      approved: decisao_mais_sprints
+      needs_fixes: call_sprint
+      needs_revision: return_needs_revision
+
+  - id: decisao_mais_sprints
+    type: decision
+    decision:
+      question: "Há mais itens no backlog para implementar?"
+      decider:
+        type: condition
+        expression: "backlog.has_pending_items()"
+      branches:
+        - when: "yes"
+          goto: call_sprint
+        - when: "no"
+          goto: return_deployed
+
+  - id: return_deployed
+    type: return
+    return_status: "deployed"
+
+  - id: return_needs_revision
+    type: return
+    return_status: "needs_revision"
+
+symbiotes:
+  - name: delivery_coach
+    role: "Coordena o processo de delivery"
+    prompt_file: "../symbiotes/delivery_coach/prompt.md"
+    capabilities:
+      - coordenar_sprints
+      - monitorar_progresso
+      - facilitar_reviews
+    can_decide: false

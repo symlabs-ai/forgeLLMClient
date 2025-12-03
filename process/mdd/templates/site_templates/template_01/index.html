@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{titulo}}</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Template 01: Foco em PROBLEMA (Dor do cliente) -->
+    <header class="hero-problem">
+        <div class="container">
+            <h1>{{titulo_principal}}</h1>
+            <p class="subtitle">{{subtitulo}}</p>
+        </div>
+    </header>
+
+    <section class="problem-section">
+        <div class="container">
+            <h2>O Problema</h2>
+            <div class="problem-card">
+                <p class="problem-text">{{descricao_problema}}</p>
+            </div>
+            <div class="pain-points">
+                <h3>Você se identifica com isso?</h3>
+                <ul>
+                    <li>{{ponto_dor_1}}</li>
+                    <li>{{ponto_dor_2}}</li>
+                    <li>{{ponto_dor_3}}</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="solution-preview">
+        <div class="container">
+            <h2>Nossa Solução</h2>
+            <p class="solution-brief">{{solucao_breve}}</p>
+            <a href="#cta" class="btn-primary">{{cta_texto}}</a>
+        </div>
+    </section>
+
+    <section class="cta-section" id="cta">
+        <div class="container">
+            <h2>{{cta_titulo}}</h2>
+            <p>{{cta_descricao}}</p>
+            <form class="signup-form" action="{{form_action}}" method="POST">
+                <input type="email" name="email" placeholder="Seu melhor e-mail" required>
+                <button type="submit" class="btn-cta">{{cta_botao}}</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <p>{{footer_texto}}</p>
+    </footer>
+</body>
+</html>

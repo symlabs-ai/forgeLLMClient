@@ -1,0 +1,353 @@
+# BDD - Behavior Driven Development
+# Subprocesso do ForgeProcess
+# Gerado automaticamente - v2.1
+
+id: bdd
+version: "0.1.0"
+title: "BDD - Behavior Driven Development"
+description: "Processo que transforma valor validado (MDD) em especificação executável (Gherkin), estabelecendo um contrato de comportamento entre stakeholders, produto, desenvolvimento e QA."
+
+is_sub_phase: true
+parent_phase: "forgeprocess.bdd"
+
+narrative: |
+  O BDD Process é a ponte entre mercado e código. Ele transforma o aprendizado
+  validado no ciclo MDD em uma especificação executável que guia o desenvolvimento
+  com clareza e rastreabilidade.
+
+  MDD (Valor Validado) → BDD (Comportamento Especificado) → TDD (Código Testado)
+
+  Não é criar testes. É estabelecer um contrato de comportamento que todos
+  — negócio, produto, dev e QA — entendem e validam juntos.
+  Todos falam a mesma língua: Gherkin.
+
+phases:
+  - id: bdd_main
+    title: "Behavior Driven Development"
+    narrative: "Especificação de comportamentos em 6 etapas"
+    spec_file: "BDD_PROCESS.md"
+
+    symbiotes:
+      - name: bdd_coach
+        role: "Guia o ciclo BDD, ajuda na escrita de features e valida qualidade"
+        prompt_file: "../symbiotes/bdd_coach/prompt.md"
+        can_decide: true
+
+    steps:
+      - id: etapa_01_mapeamento
+        title: "Etapa 01 - Mapeamento de Comportamentos"
+        narrative: |
+          Derivar comportamentos concretos dos ValueTracks definidos no MDD.
+          Para cada Track, identificar: ações do usuário, resultados esperados, erros possíveis.
+          Agrupar comportamentos por domínio.
+        spec_file: "etapa_01_mapeamento_comportamentos.md"
+        inputs:
+          - path: "docs/visao.md"
+            description: "Visão do produto (do MDD)"
+          - path: "docs/aprovacao_mvp.md"
+            description: "Aprovação formal do MVP"
+        outputs:
+          - path: "specs/bdd/drafts/behavior_mapping.md"
+            description: "Mapeamento de comportamentos (rascunho)"
+        actors:
+          - type: symbiota
+            name: bdd_coach
+            role: "Facilita o mapeamento de comportamentos"
+          - type: humano
+            name: product_owner
+            role: "Define e prioriza comportamentos"
+
+      - id: etapa_02_features
+        title: "Etapa 02 - Escrita de Features Gherkin"
+        narrative: |
+          Escrever especificações em linguagem natural (Gherkin PT-BR).
+          Regras: um comportamento por cenário, linguagem de negócio,
+          resultado observável, máximo 5-7 steps por cenário.
+        spec_file: "etapa_02_escrita_features.md"
+        inputs:
+          - path: "specs/bdd/drafts/behavior_mapping.md"
+            description: "Mapeamento de comportamentos"
+        outputs:
+          - path: "specs/bdd/**/*.feature"
+            description: "Arquivos Gherkin com features"
+        actors:
+          - type: symbiota
+            name: bdd_coach
+            role: "Auxilia na escrita de features"
+          - type: humano
+            name: product_owner
+            role: "Valida linguagem e completude"
+
+      - id: etapa_03_organizacao
+        title: "Etapa 03 - Organização e Tagging"
+        narrative: |
+          Estruturar features em pastas por domínio (10_, 20_, 30_, etc).
+          Aplicar tags de execução (@ci-fast, @ci-int, @e2e).
+          Atualizar README com guia de uso.
+        spec_file: "etapa_03_organizacao_tagging.md"
+        inputs:
+          - path: "specs/bdd/**/*.feature"
+            description: "Features Gherkin recém-criadas"
+        outputs:
+          - path: "specs/bdd/"
+            description: "Features organizadas por pasta"
+          - path: "specs/bdd/README.md"
+            description: "Guia de uso atualizado"
+        actors:
+          - type: symbiota
+            name: bdd_coach
+            role: "Propõe organização e tags"
+
+      - id: etapa_04_tracks
+        title: "Etapa 04 - Criação de tracks.yml"
+        narrative: |
+          Estabelecer rastreabilidade: Features BDD ↔ ValueTracks do MDD.
+          Cada feature deve estar mapeada em pelo menos 1 track.
+          Cada track deve ter métricas claras.
+        spec_file: "etapa_04_tracks_yml.md"
+        inputs:
+          - path: "specs/bdd/**/*.feature"
+            description: "Features organizadas"
+          - path: "docs/visao.md"
+            description: "ValueTracks originais"
+        outputs:
+          - path: "specs/bdd/tracks.yml"
+            description: "Mapeamento de tracks"
+        actors:
+          - type: symbiota
+            name: bdd_coach
+            role: "Estrutura o tracks.yml"
+          - type: humano
+            name: product_owner
+            role: "Define métricas de sucesso"
+
+      - id: etapa_05_skeleton
+        title: "Etapa 05 - Skeleton de Automação"
+        narrative: |
+          Preparar infraestrutura de testes pytest-bdd.
+          Criar step definitions vazias com TODO markers.
+          Configurar fixtures e pytest.ini.
+        spec_file: "etapa_05_skeleton_automacao.md"
+        inputs:
+          - path: "specs/bdd/**/*.feature"
+            description: "Features finalizadas"
+        outputs:
+          - path: "tests/bdd/test_*_steps.py"
+            description: "Step definitions skeleton"
+          - path: "tests/bdd/conftest.py"
+            description: "Fixtures pytest"
+          - path: "pytest.ini"
+            description: "Configuração de marcadores"
+        actors:
+          - type: symbiota
+            name: bdd_coach
+            role: "Gera skeleton de automação"
+
+      - id: etapa_06_handoff
+        title: "Etapa 06 - Handoff para Roadmap Planning"
+        narrative: |
+          Empacotar e documentar formalmente a especificação de comportamento.
+          Entregar como entrada para a fase de Roadmap Planning.
+        spec_file: "etapa_06_handoff_tdd.md"
+        inputs:
+          - path: "specs/bdd/**/*.feature"
+            description: "Todas as features"
+          - path: "specs/bdd/tracks.yml"
+            description: "Mapeamento de tracks"
+          - path: "tests/bdd/"
+            description: "Skeleton de testes"
+        outputs:
+          - path: "specs/bdd/HANDOFF_BDD.md"
+            description: "Documento de handoff"
+        actors:
+          - type: symbiota
+            name: bdd_coach
+            role: "Prepara documentação de handoff"
+          - type: humano
+            name: tech_lead
+            role: "Valida completude para TDD"
+
+flow:
+  - id: start
+    type: start
+    next: etapa_01
+
+  # ========== ETAPA 01: Mapeamento de Comportamentos ==========
+  - id: etapa_01
+    type: step
+    step_ref: bdd_main.etapa_01_mapeamento
+    next: validar_mapeamento
+
+  - id: validar_mapeamento
+    type: decision
+    decision:
+      question: "O mapeamento de ValueTracks em comportamentos (specs/bdd/drafts/behavior_mapping.md) está aprovado?"
+      decider:
+        type: hil
+        actor: product_owner
+      branches:
+        - when: "approved"
+          goto: etapa_02
+        - when: "needs_revision"
+          goto: etapa_01
+
+  # ========== ETAPA 02: Escrita de Features ==========
+  - id: etapa_02
+    type: step
+    step_ref: bdd_main.etapa_02_features
+    next: validar_features
+
+  - id: validar_features
+    type: decision
+    decision:
+      question: "As features Gherkin (specs/bdd/**/*.feature) estão aprovadas?"
+      decider:
+        type: hil
+        actor: product_owner
+      branches:
+        - when: "approved"
+          goto: etapa_03
+        - when: "needs_revision"
+          goto: etapa_02
+
+  # ========== ETAPA 03: Organização e Tagging ==========
+  - id: etapa_03
+    type: step
+    step_ref: bdd_main.etapa_03_organizacao
+    next: validar_organizacao
+
+  - id: validar_organizacao
+    type: decision
+    decision:
+      question: "A organização das features e tags (@ci-fast, @ci-int, @e2e) está aprovada?"
+      decider:
+        type: hil
+        actor: product_owner
+      branches:
+        - when: "approved"
+          goto: etapa_04
+        - when: "needs_revision"
+          goto: etapa_03
+
+  # ========== ETAPA 04: Criação de tracks.yml ==========
+  - id: etapa_04
+    type: step
+    step_ref: bdd_main.etapa_04_tracks
+    next: validar_tracks
+
+  - id: validar_tracks
+    type: decision
+    decision:
+      question: "O tracks.yml (rastreabilidade Features ↔ ValueTracks) está aprovado?"
+      decider:
+        type: hil
+        actor: product_owner
+      branches:
+        - when: "approved"
+          goto: etapa_05
+        - when: "needs_revision"
+          goto: etapa_04
+
+  # ========== ETAPA 05: Skeleton de Automação ==========
+  - id: etapa_05
+    type: step
+    step_ref: bdd_main.etapa_05_skeleton
+    next: validar_skeleton
+
+  - id: validar_skeleton
+    type: decision
+    decision:
+      question: "O skeleton de automação pytest-bdd está aprovado?"
+      decider:
+        type: hil
+        actor: tech_lead
+      branches:
+        - when: "approved"
+          goto: etapa_06
+        - when: "needs_revision"
+          goto: etapa_05
+
+  # ========== ETAPA 06: Handoff ==========
+  - id: etapa_06
+    type: step
+    step_ref: bdd_main.etapa_06_handoff
+    next: decisao_completude
+
+  - id: decisao_completude
+    type: decision
+    decision:
+      question: "BDD completo e pronto para Roadmap Planning?"
+      decider:
+        type: hil
+        actor: tech_lead
+      branches:
+        - when: "complete"
+          goto: return_complete
+        - when: "incomplete"
+          goto: etapa_02
+        - when: "needs_mdd_revision"
+          goto: return_needs_mdd
+
+  - id: return_complete
+    type: return
+    return_status: "complete"
+
+  - id: return_needs_mdd
+    type: return
+    return_status: "needs_mdd_revision"
+
+artifacts:
+  - id: behavior_mapping
+    path: "specs/bdd/drafts/behavior_mapping.md"
+    phase: bdd_main
+    description: "Mapeamento de comportamentos"
+
+  - id: features
+    path: "specs/bdd/**/*.feature"
+    phase: bdd_main
+    description: "Features Gherkin"
+
+  - id: tracks_yml
+    path: "specs/bdd/tracks.yml"
+    phase: bdd_main
+    description: "Mapeamento de tracks"
+
+  - id: glossario
+    path: "specs/bdd/00_glossario.md"
+    phase: bdd_main
+    description: "Linguagem ubíqua"
+
+  - id: handoff
+    path: "specs/bdd/HANDOFF_BDD.md"
+    phase: bdd_main
+    description: "Documento de handoff para Roadmap Planning"
+
+symbiotes:
+  - name: bdd_coach
+    role: "Coach do processo BDD"
+    prompt_file: "../symbiotes/bdd_coach/prompt.md"
+    capabilities:
+      - mapear_comportamentos
+      - escrever_gherkin
+      - organizar_features
+      - criar_tracks
+      - gerar_skeleton
+      - avaliar_completude
+    can_decide: true
+
+quality_metrics:
+  - name: feature_coverage
+    target: "100% dos ValueTracks cobertos"
+    description: "Todos os ValueTracks do MDD têm features correspondentes"
+
+  - name: scenario_count
+    target: ">= 2-3 cenários por área crítica"
+    description: "Cobertura mínima de cenários"
+
+  - name: tags_applied
+    target: "100% features com tags CI"
+    description: "Todas as features têm tags @ci-fast, @ci-int ou @e2e"
+
+  - name: tracks_mapped
+    target: "100% features em tracks.yml"
+    description: "Todas as features mapeadas para pelo menos 1 track"

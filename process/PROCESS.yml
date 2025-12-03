@@ -1,0 +1,249 @@
+# ForgeProcess - Macro Processo
+# Versão hierárquica com chamadas a subprocessos
+# v0.2 - Arquitetura de Subprocessos
+
+id: forgeprocess
+version: "0.2.4"
+title: ForgeProcess
+description: >
+  Ciclo de raciocínio que transforma intenção de valor em comportamentos verificáveis,
+  código testado, execução observável e aprendizado contínuo, medindo progresso em
+  unidades de valor de negócio em vez de tempo, tarefas ou story points.
+
+
+narrative: |-
+  ForgeProcess é o ciclo de raciocínio arquitetural do Forge Framework que propõe uma mudança de paradigma em relação às metodologias tradicionais de desenvolvimento de software: em vez de medir esforço em tempo (horas, sprints, entregas), mede-se o progresso em unidades de valor de negócio, isto é, unidades de comportamento significativo que geram resultado mensurável para o cliente.
+
+  Em vez de celebrar "5 classes implementadas" ou "15 testes criados", o ForgeProcess busca evidências como "reduzimos abandono de carrinho em 20%" ou "garantimos 0 erros em cálculo fiscal". O foco sai de velocidade e volume de entregas e passa para direção de valor, impacto e resultados de negócio observáveis.
+
+  O processo é estruturado em fases integradas que refinam o pensamento ao longo de uma corrente de valor verificável:
+
+  Intenção (Valor) → Comportamento → Prova → Execução → Aprendizado → Mais Valor
+
+  A fase de MDD (Market Driven Development) captura a intenção de valor, define ValueTracks e SupportTracks e estabelece KPIs. A fase de BDD (Behavior Driven Development) traduz essa intenção em comportamentos verificáveis descritos em Gherkin. Execution conecta essas especificações a um plano técnico executável e implementa via TDD. Delivery organiza sprints e reviews. E a fase de Feedback fecha o ciclo coletando métricas e alimentando ajustes na visão.
+
+project_layout:
+  required_dirs:
+    - "process/"
+    - "specs/"
+    - "project/"
+    - "src/"
+    - "tests/"
+  optional_dirs:
+    - "docs/"
+    - "examples/"
+  required_files:
+    - "process/PROCESS.md"
+    - "process/README.md"
+
+# Instruções pós-init para o usuário
+# Fonte: seção "Getting Started" do PROCESS.md
+getting_started:
+  message: |
+    Bem-vindo ao ForgeProcess!
+
+    Este processo guia você desde a concepção da ideia até a entrega,
+    medindo progresso em valor de negócio, não em tempo ou tarefas.
+  first_file:
+    template: "process/mdd/templates/template_hipotese.md"
+    destination: "docs/hipotese.md"
+    description: "Hipótese de mercado - ponto de partida do processo"
+  next_steps:
+    - "Execute 'symforge start' ou 'symforge tui' para começar"
+  first_command: "symforge start"
+  reference_docs:
+    - path: "process/PROCESS.md"
+      description: "Especificação completa do processo (inclui Getting Started)"
+    - path: "process/README.md"
+      description: "Guia rápido"
+    - path: "process/mdd/templates/"
+      description: "Templates para cada etapa"
+
+# Declaração de subprocessos que podem ser invocados
+# Fases de alto nível (referência a subprocessos)
+phases:
+  - id: mdd
+    title: "MDD — Market Driven Development"
+    narrative: "Define valor de mercado e valida hipótese"
+    sub_phase: "mdd/PROCESS.yml"
+
+  - id: bdd
+    title: "BDD — Behavior Driven Development"
+    narrative: "Traduz valor em comportamentos verificáveis Gherkin"
+    sub_phase: "bdd/PROCESS.yml"
+
+  - id: execution
+    title: "Execution — Roadmap + TDD"
+    narrative: "Planeja arquitetura e implementa com TDD"
+    sub_phase: "execution/PROCESS.yml"
+
+  - id: delivery
+    title: "Delivery — Sprint + Review"
+    narrative: "Organiza sprints e conduz reviews"
+    sub_phase: "delivery/PROCESS.yml"
+
+  - id: feedback
+    title: "Feedback — Reflexão"
+    narrative: "Coleta métricas e fecha o ciclo de aprendizado"
+    spec_file: null
+    steps:
+      - id: feedback_collect
+        title: "Coletar Feedback"
+        narrative: "Coletar métricas operacionais e KPIs de valor"
+      - id: feedback_analyze
+        title: "Analisar Feedback"
+        narrative: "Analisar dados e gerar recomendações"
+
+# Fluxo principal usando chamadas a subprocessos
+flow:
+  - id: start
+    type: start
+    next: call_mdd
+
+  # === FASE MDD ===
+  - id: call_mdd
+    type: call
+    subprocess_id: mdd
+    on_return:
+      approved: call_bdd
+      rejected: end_projeto_rejeitado
+
+  # === FASE BDD ===
+  - id: call_bdd
+    type: call
+    subprocess_id: bdd
+    on_return:
+      complete: call_execution
+      needs_mdd_revision: call_mdd
+
+  # === FASE EXECUTION ===
+  - id: call_execution
+    type: call
+    subprocess_id: execution
+    on_return:
+      complete: call_delivery
+      needs_bdd_revision: call_bdd
+
+  # === FASE DELIVERY ===
+  - id: call_delivery
+    type: call
+    subprocess_id: delivery
+    on_return:
+      deployed: feedback_collect
+      needs_revision: call_execution
+
+  # === FASE FEEDBACK ===
+  - id: feedback_collect
+    type: step
+    step_ref: feedback.feedback_collect
+    next: feedback_analyze
+
+  - id: feedback_analyze
+    type: step
+    step_ref: feedback.feedback_analyze
+    next: decisao_mudar_visao
+
+  # Decisão HIL: Precisa mudar a visão?
+  - id: decisao_mudar_visao
+    type: decision
+    decision:
+      question: "A visão ou hipótese de valor precisa mudar com base nas métricas e no feedback coletados?"
+      decider:
+        type: hil
+        actor: product_owner
+      branches:
+        - when: "yes"
+          goto: call_mdd
+        - when: "no"
+          goto: decisao_continuar_ciclo
+
+  # Decisão: Continuar com mais ciclos?
+  - id: decisao_continuar_ciclo
+    type: decision
+    decision:
+      question: "O produto está completo ou há mais ValueTracks a implementar?"
+      decider:
+        type: hil
+        actor: product_owner
+      branches:
+        - when: "continuar"
+          goto: call_bdd
+        - when: "completo"
+          goto: end_ciclo_completo
+
+  # Fins do processo
+  - id: end_ciclo_completo
+    type: end
+
+  - id: end_projeto_rejeitado
+    type: end
+
+# Artefatos principais do macro processo
+artifacts:
+  - id: visao
+    path: "project/docs/visao.md"
+    phase: mdd
+    description: "Documento de visão com ValueTracks, SupportTracks e KPIs"
+
+  - id: features_bdd
+    path: "specs/bdd/**/*.feature"
+    phase: bdd
+    description: "Features Gherkin descrevendo comportamentos"
+
+  - id: tracks_yml
+    path: "specs/bdd/tracks.yml"
+    phase: bdd
+    description: "Mapeamento de rastreabilidade"
+
+  - id: roadmap
+    path: "specs/roadmap/ROADMAP.md"
+    phase: execution
+    description: "Visão executiva do plano de implementação"
+
+  - id: backlog
+    path: "specs/roadmap/BACKLOG.md"
+    phase: execution
+    description: "Backlog priorizado"
+
+  - id: source_code
+    path: "src/"
+    phase: execution
+    description: "Código fonte implementado"
+
+  - id: tests
+    path: "tests/"
+    phase: execution
+    description: "Testes automatizados"
+
+# Symbiotas globais do macro processo
+symbiotes:
+  - name: forgeprocess_orchestrator
+    role: "Orquestra o fluxo entre subprocessos e monitora progresso global"
+    prompt_file: "symbiotes/orchestrator/prompt.md"
+    capabilities:
+      - coordenar_subprocessos
+      - monitorar_kpis
+      - gerar_relatorios
+    can_decide: false
+
+  - name: jorge_the_forge
+    role: "Auditor de processo que avalia compliance do ForgeProcess"
+    prompt_file: "symbiotes/jorge_the_forge/prompt.md"
+    capabilities:
+      - validar_processo
+      - gerar_recomendacoes
+    can_decide: true
+
+# Métricas de qualidade do macro processo
+quality_metrics:
+  - name: value_delivery_rate
+    target: ">= 80% dos ValueTracks entregues por ciclo"
+    description: "Taxa de entrega de valor por ciclo"
+
+  - name: cycle_completion
+    target: "100% dos ciclos completados sem bloqueios"
+    description: "Ciclos completados vs iniciados"
+
+  - name: kpi_achievement
+    target: ">= 70% dos KPIs atingidos"
+    description: "Taxa de KPIs de valor atingidos"

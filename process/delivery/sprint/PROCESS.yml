@@ -1,0 +1,213 @@
+# Sprint Workflow Process
+# Sub-subprocesso do Delivery
+# Gerado automaticamente - v2.1
+
+id: sprint
+version: "0.1.0"
+title: "Sprint - Session-Based Development"
+description: "Organização do trabalho em sprints e sessões, adaptado para agent coders com modelo session-based."
+
+is_sub_phase: true
+parent_phase: "delivery.sprint"
+
+narrative: |
+  Este processo documenta como conduzir sprints com agent coders
+  usando modelo session-based, diferente de times humanos com daily standups.
+
+  Sprint (2 semanas típico):
+  - 3-4 sessões/semana de 2-3h
+  - Mini-planning no início de cada sessão
+  - Session review + commit ao final
+  - Sprint Review em 3 dias (técnico, processo, stakeholder)
+
+phases:
+  - id: sprint_cycle
+    title: "Sprint Cycle"
+    narrative: "Organização de sessões e cerimônias"
+    spec_file: "SPRINT_PROCESS.md"
+
+    steps:
+      - id: sprint_planning
+        title: "Sprint Planning"
+        narrative: |
+          Definir features da sprint (do backlog).
+          Estimar story points e capacidade.
+          Definir frequência de sessões.
+          Identificar riscos.
+        inputs:
+          - path: "specs/roadmap/BACKLOG.md"
+            description: "Backlog priorizado"
+        outputs:
+          - path: "project/sprints/sprint-N/planning.md"
+            description: "Planejamento da sprint"
+        actors:
+          - type: symbiota
+            name: sprint_coach
+            role: "Facilita o planning"
+          - type: humano
+            name: stakeholder
+            role: "Confirma prioridades"
+
+      - id: session_mini_planning
+        title: "Session Mini-Planning"
+        narrative: |
+          Revisar features planejadas.
+          Selecionar 1-2 features para a sessão.
+          Verificar dependências.
+        inputs:
+          - path: "project/sprints/sprint-N/planning.md"
+            description: "Planejamento da sprint"
+        outputs:
+          - path: "project/sprints/sprint-N/sessions/session-M.md"
+            description: "Registro da sessão"
+        actors:
+          - type: symbiota
+            name: sprint_coach
+            role: "Seleciona features"
+
+      - id: session_implementation
+        title: "Session Implementation"
+        narrative: |
+          Implementar features selecionadas usando TDD.
+          Seguir ciclo Red-Green-Refactor.
+          Documentar decisões e mudanças.
+        inputs:
+          - path: "project/sprints/sprint-N/sessions/session-M.md"
+            description: "Features da sessão"
+        outputs:
+          - path: "src/**/*.py"
+            description: "Código implementado"
+          - path: "tests/**/*.py"
+            description: "Testes automatizados"
+        actors:
+          - type: symbiota
+            name: tdd_coder
+            role: "Implementa código"
+
+      - id: session_review
+        title: "Session Review"
+        narrative: |
+          Demonstrar features implementadas.
+          Verificar critérios de aceitação.
+          Aprovar commit.
+        inputs:
+          - path: "src/**/*.py"
+            description: "Código implementado"
+          - path: "tests/**/*.py"
+            description: "Testes passando"
+        outputs:
+          - path: "project/sprints/sprint-N/sessions/session-M.md"
+            description: "Sessão documentada e aprovada"
+        actors:
+          - type: humano
+            name: stakeholder
+            role: "Aprova entrega"
+          - type: symbiota
+            name: sprint_coach
+            role: "Documenta resultado"
+
+      - id: session_commit
+        title: "Session Commit"
+        narrative: |
+          Commitar código aprovado.
+          Atualizar progress.md.
+          Marcar features como concluídas.
+        outputs:
+          - path: "project/sprints/sprint-N/progress.md"
+            description: "Progresso atualizado"
+        actors:
+          - type: symbiota
+            name: tdd_coder
+            role: "Realiza commit"
+
+flow:
+  - id: start
+    type: start
+    next: sprint_planning
+
+  - id: sprint_planning
+    type: step
+    step_ref: sprint_cycle.sprint_planning
+    next: session_loop_start
+
+  - id: session_loop_start
+    type: step
+    step_ref: sprint_cycle.session_mini_planning
+    next: session_impl
+
+  - id: session_impl
+    type: step
+    step_ref: sprint_cycle.session_implementation
+    next: session_rev
+
+  - id: session_rev
+    type: step
+    step_ref: sprint_cycle.session_review
+    next: decisao_sessao_aprovada
+
+  - id: decisao_sessao_aprovada
+    type: decision
+    decision:
+      question: "Features da sessão aprovadas pelo stakeholder?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: session_commit
+        - when: "needs_fixes"
+          goto: session_impl
+        - when: "blocked"
+          goto: return_blocked
+
+  - id: session_commit
+    type: step
+    step_ref: sprint_cycle.session_commit
+    next: decisao_mais_sessoes
+
+  - id: decisao_mais_sessoes
+    type: decision
+    decision:
+      question: "Sprint ainda tem sessões planejadas?"
+      decider:
+        type: condition
+        expression: "sprint.has_remaining_sessions()"
+      branches:
+        - when: "yes"
+          goto: session_loop_start
+        - when: "no"
+          goto: return_complete
+
+  - id: return_complete
+    type: return
+    return_status: "session_complete"
+
+  - id: return_blocked
+    type: return
+    return_status: "blocked"
+
+artifacts:
+  - id: planning
+    path: "project/sprints/sprint-N/planning.md"
+    phase: sprint_cycle
+    description: "Planejamento da sprint"
+
+  - id: progress
+    path: "project/sprints/sprint-N/progress.md"
+    phase: sprint_cycle
+    description: "Progresso da sprint"
+
+  - id: sessions
+    path: "project/sprints/sprint-N/sessions/*.md"
+    phase: sprint_cycle
+    description: "Registros das sessões"
+
+symbiotes:
+  - name: sprint_coach
+    role: "Facilitador de sprints"
+    prompt_file: "../../symbiotes/sprint_coach/prompt.md"
+    capabilities:
+      - facilitar_planning
+      - acompanhar_progresso
+      - documentar_sessoes
+    can_decide: false

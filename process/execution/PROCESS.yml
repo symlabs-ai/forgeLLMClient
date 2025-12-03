@@ -1,0 +1,83 @@
+# Execution Process
+# Subprocesso do ForgeProcess que orquestra Roadmap Planning + TDD
+# Gerado automaticamente - v2.1
+
+id: execution
+version: "0.1.0"
+title: "Execution - Roadmap Planning + TDD"
+description: "Macro-processo que conecta especificação BDD com backlog técnico e código testado, orquestrando Roadmap Planning e TDD Workflow."
+
+is_sub_phase: true
+parent_phase: "forgeprocess.execution"
+
+narrative: |
+  O Execution Process é o macro-processo que conecta o que foi especificado em BDD
+  com um backlog técnico claro e um código testado.
+
+  Ele agrupa dois subprocessos:
+  1. Roadmap Planning – arquitetura, sequenciamento e backlog executável
+  2. TDD Workflow – implementação guiada por testes (Red–Green–Refactor)
+
+  BDD (O QUÊ fazer) → Execution (QUANDO/COMO) → Código Testado
+
+subprocesses:
+  - id: roadmap_planning
+    path: "roadmap_planning/PROCESS.yml"
+    description: "Planejamento arquitetural, sequenciamento e criação de backlog"
+    expected_returns:
+      - complete
+      - needs_bdd_revision
+
+  - id: tdd
+    path: "tdd/PROCESS.yml"
+    description: "Implementação guiada por testes (Red-Green-Refactor)"
+    expected_returns:
+      - complete
+      - needs_roadmap_revision
+
+phases:
+  - id: execution_overview
+    title: "Execution Overview"
+    narrative: "Orquestração de Roadmap Planning e TDD"
+    spec_file: "PROCESS.md"
+    steps:
+      - id: coordination
+        title: "Coordenação de Subprocessos"
+        narrative: "Gerenciar transição entre Roadmap Planning e TDD"
+
+flow:
+  - id: start
+    type: start
+    next: call_roadmap_planning
+
+  - id: call_roadmap_planning
+    type: call
+    subprocess_id: roadmap_planning
+    on_return:
+      complete: call_tdd
+      needs_bdd_revision: return_needs_bdd
+
+  - id: call_tdd
+    type: call
+    subprocess_id: tdd
+    on_return:
+      complete: return_complete
+      needs_roadmap_revision: call_roadmap_planning
+
+  - id: return_complete
+    type: return
+    return_status: "complete"
+
+  - id: return_needs_bdd
+    type: return
+    return_status: "needs_bdd_revision"
+
+symbiotes:
+  - name: execution_coach
+    role: "Coordena o processo de execução"
+    prompt_file: "../symbiotes/execution_coach/prompt.md"
+    capabilities:
+      - coordenar_subprocessos
+      - monitorar_progresso
+      - identificar_bloqueios
+    can_decide: false

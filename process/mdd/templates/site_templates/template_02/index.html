@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{titulo}}</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Template 02: Foco em SOLUÇÃO (Benefícios e transformação) -->
+    <header class="hero-solution">
+        <div class="container">
+            <h1>{{titulo_principal}}</h1>
+            <p class="subtitle">{{subtitulo}}</p>
+            <a href="#cta" class="btn-hero">{{cta_hero}}</a>
+        </div>
+    </header>
+
+    <section class="benefits-section">
+        <div class="container">
+            <h2>O Que Você Vai Conquistar</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="icon">✓</div>
+                    <h3>{{beneficio_1_titulo}}</h3>
+                    <p>{{beneficio_1_descricao}}</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="icon">✓</div>
+                    <h3>{{beneficio_2_titulo}}</h3>
+                    <p>{{beneficio_2_descricao}}</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="icon">✓</div>
+                    <h3>{{beneficio_3_titulo}}</h3>
+                    <p>{{beneficio_3_descricao}}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works">
+        <div class="container">
+            <h2>Como Funciona</h2>
+            <div class="steps">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <h3>{{passo_1_titulo}}</h3>
+                    <p>{{passo_1_descricao}}</p>
+                </div>
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <h3>{{passo_2_titulo}}</h3>
+                    <p>{{passo_2_descricao}}</p>
+                </div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <h3>{{passo_3_titulo}}</h3>
+                    <p>{{passo_3_descricao}}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section" id="cta">
+        <div class="container">
+            <h2>{{cta_titulo}}</h2>
+            <p>{{cta_descricao}}</p>
+            <form class="signup-form" action="{{form_action}}" method="POST">
+                <input type="email" name="email" placeholder="Seu melhor e-mail" required>
+                <button type="submit" class="btn-cta">{{cta_botao}}</button>
+            </form>
+            <p class="guarantee">{{garantia}}</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>{{footer_texto}}</p>
+    </footer>
+</body>
+</html>

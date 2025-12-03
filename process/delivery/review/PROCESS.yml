@@ -1,0 +1,222 @@
+# Review Process
+# Sub-subprocesso do Delivery
+# Gerado automaticamente - v2.1
+
+id: review
+version: "0.1.0"
+title: "Review & Feedback"
+description: "Validação técnica, de processo e de negócio antes de consolidar a entrega. Inclui bill-review (técnico), Jorge the Forge (processo) e Stakeholder Review."
+
+is_sub_phase: true
+parent_phase: "delivery.review"
+
+narrative: |
+  Este processo define três tipos de review:
+  1. Check-in Técnico e Demo - Validação por sessão/feature
+  2. Sprint Review (Technical) - bill-review valida código, arquitetura, testes
+  3. Sprint Review (Process) - Jorge the Forge valida ForgeProcess compliance
+
+  Sprint Review em 3 dias:
+  - Dia 1: bill-review (técnico)
+  - Dia 2: Jorge the Forge (processo)
+  - Dia 3: Stakeholder Review & Deploy
+
+phases:
+  - id: review_cycle
+    title: "Review Cycle"
+    narrative: "Validação técnica, de processo e de negócio"
+    spec_file: "REVIEW_PROCESS.md"
+
+    steps:
+      - id: etapa_bill_review
+        title: "Day 1 - bill-review (Technical)"
+        narrative: |
+          Invocar bill-review agent para validação técnica completa.
+          Verificar: Clean Architecture, Forgebase, testes, padrões.
+          Gerar review.md com análise e recomendações.
+        spec_file: "etapa_bill_review.md"
+        inputs:
+          - path: "src/**/*.py"
+            description: "Código implementado"
+          - path: "tests/**/*.py"
+            description: "Testes automatizados"
+          - path: "specs/bdd/**/*.feature"
+            description: "Features BDD"
+        outputs:
+          - path: "project/sprints/sprint-N/review.md"
+            description: "Review técnico"
+        actors:
+          - type: symbiota
+            name: bill_review
+            role: "Valida qualidade técnica"
+            can_decide: true
+
+      - id: etapa_jorge_process
+        title: "Day 2 - Jorge the Forge (Process)"
+        narrative: |
+          Invocar Jorge the Forge para validação de processo.
+          Verificar: ForgeProcess compliance, TDD, BDD, Sprint workflow.
+          Gerar jorge-process-review.md com análise.
+        spec_file: "etapa_jorge_process_review.md"
+        inputs:
+          - path: "project/sprints/sprint-N/review.md"
+            description: "Review técnico"
+          - path: "project/sprints/sprint-N/planning.md"
+            description: "Planejamento da sprint"
+          - path: "project/sprints/sprint-N/progress.md"
+            description: "Progresso da sprint"
+        outputs:
+          - path: "project/sprints/sprint-N/jorge-process-review.md"
+            description: "Review de processo"
+        actors:
+          - type: symbiota
+            name: jorge_the_forge
+            role: "Valida aderência ao ForgeProcess"
+            can_decide: true
+
+      - id: etapa_stakeholder
+        title: "Day 3 - Stakeholder Review & Deploy"
+        narrative: |
+          Apresentar incrementos ao stakeholder.
+          Validar valor de negócio.
+          Decidir: release, ajustes ou rollback.
+        spec_file: "etapa_stakeholder_validation.md"
+        inputs:
+          - path: "project/sprints/sprint-N/review.md"
+            description: "Review técnico"
+          - path: "project/sprints/sprint-N/jorge-process-review.md"
+            description: "Review de processo"
+        outputs:
+          - path: "project/sprints/sprint-N/stakeholder-approval.md"
+            description: "Aprovação do stakeholder"
+        actors:
+          - type: humano
+            name: stakeholder
+            role: "Decide release"
+
+flow:
+  - id: start
+    type: start
+    next: bill_review
+
+  - id: bill_review
+    type: step
+    step_ref: review_cycle.etapa_bill_review
+    next: decisao_tech_approved
+
+  - id: decisao_tech_approved
+    type: decision
+    decision:
+      question: "Código passou na validação técnica do bill-review?"
+      decider:
+        type: symbiota
+        actor: bill_review
+        expression: "technical_compliance >= 80% AND no_critical_issues"
+      branches:
+        - when: "approved"
+          goto: jorge_review
+        - when: "needs_fixes"
+          goto: return_needs_fixes
+        - when: "critical"
+          goto: return_needs_fixes
+
+  - id: jorge_review
+    type: step
+    step_ref: review_cycle.etapa_jorge_process
+    next: decisao_process_approved
+
+  - id: decisao_process_approved
+    type: decision
+    decision:
+      question: "Sprint seguiu o ForgeProcess corretamente?"
+      decider:
+        type: symbiota
+        actor: jorge_the_forge
+        expression: "process_compliance >= 80% AND methodology_followed"
+      branches:
+        - when: "approved"
+          goto: stakeholder_review
+        - when: "needs_revision"
+          goto: return_needs_revision
+
+  - id: stakeholder_review
+    type: step
+    step_ref: review_cycle.etapa_stakeholder
+    next: decisao_stakeholder
+
+  - id: decisao_stakeholder
+    type: decision
+    decision:
+      question: "Incremento entrega valor e pode ser liberado?"
+      decider:
+        type: hil
+        actor: stakeholder
+      branches:
+        - when: "approved"
+          goto: return_approved
+        - when: "needs_fixes"
+          goto: return_needs_fixes
+        - when: "rollback"
+          goto: return_needs_revision
+
+  - id: return_approved
+    type: return
+    return_status: "approved"
+
+  - id: return_needs_fixes
+    type: return
+    return_status: "needs_fixes"
+
+  - id: return_needs_revision
+    type: return
+    return_status: "needs_revision"
+
+artifacts:
+  - id: tech_review
+    path: "project/sprints/sprint-N/review.md"
+    phase: review_cycle
+    description: "Review técnico (bill-review)"
+
+  - id: process_review
+    path: "project/sprints/sprint-N/jorge-process-review.md"
+    phase: review_cycle
+    description: "Review de processo (Jorge the Forge)"
+
+  - id: stakeholder_approval
+    path: "project/sprints/sprint-N/stakeholder-approval.md"
+    phase: review_cycle
+    description: "Aprovação do stakeholder"
+
+symbiotes:
+  - name: bill_review
+    role: "Revisor técnico"
+    prompt_file: "../../symbiotes/bill_review/prompt.md"
+    capabilities:
+      - validar_arquitetura
+      - validar_codigo
+      - validar_testes
+      - gerar_relatorio
+    can_decide: true
+
+  - name: jorge_the_forge
+    role: "Revisor de processo"
+    prompt_file: "../../symbiotes/jorge_the_forge/prompt.md"
+    capabilities:
+      - validar_forgeprocess
+      - validar_metodologia
+      - validar_documentacao
+      - gerar_relatorio
+    can_decide: true
+
+quality_metrics:
+  - name: technical_compliance
+    target: ">= 80%"
+    description: "Conformidade técnica avaliada pelo bill-review"
+
+  - name: process_compliance
+    target: ">= 80%"
+    description: "Conformidade de processo avaliada pelo Jorge"
+
+  - name: stakeholder_satisfaction
+    target: "approved"
+    description: "Aprovação do stakeholder para release"

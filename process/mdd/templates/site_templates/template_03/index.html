@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{titulo}}</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Template 03: Foco em PROVA SOCIAL (Casos de sucesso e credibilidade) -->
+    <header class="hero-social">
+        <div class="container">
+            <div class="trust-badge">{{badge_confianca}}</div>
+            <h1>{{titulo_principal}}</h1>
+            <p class="subtitle">{{subtitulo}}</p>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-number">{{estatistica_1_numero}}</span>
+                    <span class="stat-label">{{estatistica_1_label}}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">{{estatistica_2_numero}}</span>
+                    <span class="stat-label">{{estatistica_2_label}}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">{{estatistica_3_numero}}</span>
+                    <span class="stat-label">{{estatistica_3_label}}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="testimonials-section">
+        <div class="container">
+            <h2>O Que Nossos Clientes Dizem</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <p class="quote">"{{depoimento_1_texto}}"</p>
+                    <div class="author">
+                        <strong>{{depoimento_1_nome}}</strong>
+                        <span>{{depoimento_1_cargo}}</span>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="quote">"{{depoimento_2_texto}}"</p>
+                    <div class="author">
+                        <strong>{{depoimento_2_nome}}</strong>
+                        <span>{{depoimento_2_cargo}}</span>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="quote">"{{depoimento_3_texto}}"</p>
+                    <div class="author">
+                        <strong>{{depoimento_3_nome}}</strong>
+                        <span>{{depoimento_3_cargo}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="case-studies">
+        <div class="container">
+            <h2>Casos de Sucesso Reais</h2>
+            <div class="cases-grid">
+                <div class="case-card">
+                    <h3>{{caso_1_empresa}}</h3>
+                    <p class="case-result">{{caso_1_resultado}}</p>
+                    <p class="case-detail">{{caso_1_detalhe}}</p>
+                </div>
+                <div class="case-card">
+                    <h3>{{caso_2_empresa}}</h3>
+                    <p class="case-result">{{caso_2_resultado}}</p>
+                    <p class="case-detail">{{caso_2_detalhe}}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="logos-section">
+        <div class="container">
+            <p class="logos-title">{{logos_titulo}}</p>
+            <div class="logos">
+                <span>{{logo_1}}</span>
+                <span>{{logo_2}}</span>
+                <span>{{logo_3}}</span>
+                <span>{{logo_4}}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section" id="cta">
+        <div class="container">
+            <h2>{{cta_titulo}}</h2>
+            <p>{{cta_descricao}}</p>
+            <form class="signup-form" action="{{form_action}}" method="POST">
+                <input type="email" name="email" placeholder="Seu melhor e-mail" required>
+                <button type="submit" class="btn-cta">{{cta_botao}}</button>
+            </form>
+            <p class="social-proof">{{prova_social_extra}}</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>{{footer_texto}}</p>
+    </footer>
+</body>
+</html>

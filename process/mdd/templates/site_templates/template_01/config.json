@@ -1,0 +1,38 @@
+{
+  "template_name": "template_01_problema",
+  "description": "Template focado em evidenciar a DOR do cliente (problema urgente)",
+  "foco": "problema",
+  "tom": "urgente, sério, empático",
+  "variaveis_obrigatorias": [
+    "titulo",
+    "titulo_principal",
+    "subtitulo",
+    "descricao_problema",
+    "ponto_dor_1",
+    "ponto_dor_2",
+    "ponto_dor_3",
+    "solucao_breve",
+    "cta_texto",
+    "cta_titulo",
+    "cta_descricao",
+    "cta_botao",
+    "form_action",
+    "footer_texto"
+  ],
+  "exemplo_uso": {
+    "titulo": "Pare de Perder Tempo com Processos Manuais",
+    "titulo_principal": "Você está cansado de processos lentos e repetitivos?",
+    "subtitulo": "Empresas perdem em média 20h/semana em tarefas manuais que poderiam ser automatizadas",
+    "descricao_problema": "Enquanto você e sua equipe gastam horas em trabalho repetitivo, seus concorrentes já estão automatizando tudo e ganhando vantagem competitiva.",
+    "ponto_dor_1": "Perda de tempo com tarefas repetitivas que não agregam valor",
+    "ponto_dor_2": "Erros humanos custando caro em retrabalho",
+    "ponto_dor_3": "Equipe desmotivada fazendo trabalho manual",
+    "solucao_breve": "Automatize seus processos em minutos, sem código, sem complexidade.",
+    "cta_texto": "Quero Automatizar Agora",
+    "cta_titulo": "Teste Grátis por 14 Dias",
+    "cta_descricao": "Sem cartão de crédito. Sem compromisso. Cancele quando quiser.",
+    "cta_botao": "Começar Teste Grátis",
+    "form_action": "https://example.com/signup",
+    "footer_texto": "© 2025 - Sua Empresa. Todos os direitos reservados."
+  }
+}
