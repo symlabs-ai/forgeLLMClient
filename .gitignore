@@ -1,7 +1,39 @@
+# Virtual environment
 .venv/
-temp/
+
+# Cache directories
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 __pycache__/
+
+# Bytecode
 *.pyc
 *.pyo
+*.pyd
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+temp/
+logs/
+*.log
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Generated docs
 docs/pitch_deck.pdf
 docs/site_forgellmclient.pdf

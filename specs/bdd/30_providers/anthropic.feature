@@ -1,71 +1,73 @@
-# language: pt
+@sdk @provider @anthropic
+Feature: Anthropic Provider
+  In order to use Anthropic models (Claude)
+  As a Python developer
+  I want to integrate with the Anthropic API seamlessly
 
-@sdk @provider @anthropic @ci-int
-FUNCIONALIDADE: Provedor Anthropic
-  PARA usar modelos da Anthropic (Claude)
-  COMO um desenvolvedor Python
-  QUERO integrar com a API da Anthropic de forma transparente
+  Background:
+    Given the ForgeLLMClient is installed
+    And the environment variable ANTHROPIC_API_KEY is configured
 
-  CONTEXTO:
-    DADO que o ForgeLLMClient esta instalado
-    E a variavel de ambiente ANTHROPIC_API_KEY esta configurada
+  # ========== CONFIGURATION SCENARIOS ==========
 
-  # ========== CENARIOS DE CONFIGURACAO ==========
+  @ci-fast
+  Scenario: Configure Anthropic provider with API key
+    When I configure the client with provider "anthropic"
+    Then the client is ready for use
+    And the active provider is "anthropic"
 
-  CENARIO: Configurar provedor Anthropic com API key
-    QUANDO configuro o cliente com o provedor "anthropic"
-    ENTAO o cliente esta pronto para uso
-    E o provedor ativo e "anthropic"
+  @ci-fast
+  Scenario: Configure Anthropic with Claude 3 model
+    When I configure the client with provider "anthropic" and model "claude-3-sonnet-20240229"
+    Then the active model is "claude-3-sonnet-20240229"
 
-  CENARIO: Configurar Anthropic com modelo Claude 3
-    QUANDO configuro o cliente com o provedor "anthropic" e modelo "claude-3-sonnet-20240229"
-    ENTAO o modelo ativo e "claude-3-sonnet-20240229"
+  @ci-fast
+  Scenario: Configure Anthropic with Claude 3.5 model
+    When I configure the client with provider "anthropic" and model "claude-3-5-sonnet-20241022"
+    Then the active model is "claude-3-5-sonnet-20241022"
 
-  CENARIO: Configurar Anthropic com modelo Claude 3.5
-    QUANDO configuro o cliente com o provedor "anthropic" e modelo "claude-3-5-sonnet-20241022"
-    ENTAO o modelo ativo e "claude-3-5-sonnet-20241022"
+  # ========== CHAT SCENARIOS ==========
 
-  # ========== CENARIOS DE CHAT ==========
+  @slow @integration
+  Scenario: Send message to Claude
+    Given the client is configured with provider "anthropic"
+    When I send the message "Say only: test"
+    Then I receive a response with status "success"
+    And the response contains text
+    And provider.id in response is "anthropic"
 
-  @slow
-  CENARIO: Enviar mensagem para Claude
-    DADO que o cliente esta configurado com provedor "anthropic"
-    QUANDO envio a mensagem "Diga apenas: teste"
-    ENTAO recebo uma resposta com status "success"
-    E a resposta contem texto
-    E provider.id na resposta e "anthropic"
+  @slow @streaming @integration
+  Scenario: Streaming with Anthropic
+    Given the client is configured with provider "anthropic"
+    When I send the message "Count from 1 to 3" with streaming enabled
+    Then I receive chunks progressively
+    And the final response is complete
 
-  @slow @streaming
-  CENARIO: Streaming com Anthropic
-    DADO que o cliente esta configurado com provedor "anthropic"
-    QUANDO envio a mensagem "Conte de 1 a 3" com streaming habilitado
-    ENTAO recebo chunks progressivamente
-    E a resposta final esta completa
+  # ========== TOOL CALLING SCENARIOS ==========
 
-  # ========== CENARIOS DE TOOL CALLING ==========
+  @slow @tools @integration
+  Scenario: Tool calling with Anthropic
+    Given the client is configured with provider "anthropic"
+    And the tool "get_weather" is registered
+    When I send the message "What is the weather in Sao Paulo?"
+    Then I receive a response with tool_call
+    And the tool_call has normalized format
+    And the tool_call.name is "get_weather"
 
-  @slow @tools
-  CENARIO: Tool calling com Anthropic
-    DADO que o cliente esta configurado com provedor "anthropic"
-    E a ferramenta "get_weather" esta registrada
-    QUANDO envio a mensagem "Qual o clima em Sao Paulo?"
-    ENTAO recebo uma resposta com tool_call
-    E o tool_call tem formato normalizado
-    E o tool_call.name e "get_weather"
+  # ========== NORMALIZATION SCENARIOS ==========
 
-  # ========== CENARIOS DE NORMALIZACAO ==========
+  @ci-fast
+  Scenario: Anthropic response follows unified format
+    Given the client is configured with provider "anthropic"
+    When I send the message "Format test"
+    Then the response is of type ChatResponse
+    And the response has the same fields as responses from other providers
 
-  CENARIO: Resposta Anthropic segue formato unificado
-    DADO que o cliente esta configurado com provedor "anthropic"
-    QUANDO envio a mensagem "Teste de formato"
-    ENTAO a resposta e do tipo ChatResponse
-    E a resposta tem os mesmos campos que resposta de outros provedores
+  # ========== ERROR SCENARIOS ==========
 
-  # ========== CENARIOS DE ERRO ==========
-
-  @error
-  CENARIO: Erro com API key invalida
-    DADO que configuro o cliente com api_key "sk-ant-invalida"
-    QUANDO tento enviar uma mensagem
-    ENTAO recebo um erro do tipo "AuthenticationError"
-    E a mensagem de erro contem "authentication" ou "api_key"
+  @error @ci-fast
+  Scenario: Error with invalid API key
+    Given I configure the client with api_key "sk-ant-invalid"
+    When I try to send a message
+    Then I receive an error of type "AuthenticationError"
+    And the error message contains "authentication" or "api_key"

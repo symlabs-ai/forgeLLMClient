@@ -1,0 +1,1 @@
+"""Use Cases da aplicacao."""

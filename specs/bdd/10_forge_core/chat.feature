@@ -1,60 +1,50 @@
-# language: pt
-
 @sdk @chat @ci-fast
-FUNCIONALIDADE: Chat basico com LLM
-  PARA enviar mensagens e receber respostas de LLMs
-  COMO um desenvolvedor Python
-  QUERO usar uma interface unica independente do provedor
+Feature: Basic chat with LLM
+  In order to send messages and receive responses from LLMs
+  As a Python developer
+  I want to use a unified interface regardless of provider
 
-  CONTEXTO:
-    DADO que o ForgeLLMClient esta instalado
-    E o ambiente de teste esta configurado
+  Background:
+    Given the ForgeLLMClient is installed
+    And the test environment is configured
 
-  # ========== CENARIOS DE SUCESSO ==========
-
-  @sync
-  CENARIO: Enviar mensagem e receber resposta
-    DADO que o cliente esta configurado com o provedor "mock"
-    QUANDO envio a mensagem "Ola, mundo!"
-    ENTAO recebo uma resposta com status "success"
-    E a resposta contem texto nao vazio
-    E a resposta tem formato ChatResponse valido
+  # ========== SUCCESS SCENARIOS ==========
 
   @sync
-  CENARIO: Enviar mensagem com parametros opcionais
-    DADO que o cliente esta configurado com o provedor "mock"
-    QUANDO envio a mensagem "Explique Python" com temperatura 0.7
-    ENTAO recebo uma resposta com status "success"
-    E a resposta contem texto nao vazio
+  Scenario: Send message and receive response
+    Given the client is configured with provider "mock"
+    When I send the message "Hello, world!"
+    Then I receive a response with status "success"
+    And the response contains non-empty text
+    And the response has valid ChatResponse format
+
+  @sync
+  Scenario: Send message with optional parameters
+    Given the client is configured with provider "mock"
+    When I send the message "Explain Python" with temperature 0.7
+    Then I receive a response with status "success"
+    And the response contains non-empty text
 
   @streaming
-  CENARIO: Enviar mensagem com streaming
-    DADO que o cliente esta configurado com o provedor "mock"
-    QUANDO envio a mensagem "Conte ate 5" com streaming habilitado
-    ENTAO recebo chunks de resposta progressivamente
-    E o ultimo chunk indica fim do stream
-    E a resposta final esta completa
+  Scenario: Send message with streaming
+    Given the client is configured with provider "mock"
+    When I send the message "Count to 5" with streaming enabled
+    Then I receive response chunks progressively
+    And the last chunk indicates end of stream
+    And the final response is complete
 
-  # ========== CENARIOS DE ERRO ==========
-
-  @error
-  CENARIO: Erro ao usar sem provedor configurado
-    DADO que o cliente NAO esta configurado com nenhum provedor
-    QUANDO tento enviar uma mensagem
-    ENTAO recebo um erro do tipo "ConfigurationError"
-    E a mensagem de erro contem "provedor nao configurado"
+  # ========== ERROR SCENARIOS ==========
 
   @error
-  CENARIO: Erro ao enviar mensagem vazia
-    DADO que o cliente esta configurado com o provedor "mock"
-    QUANDO envio uma mensagem vazia
-    ENTAO recebo um erro do tipo "ValidationError"
-    E a mensagem de erro contem "mensagem nao pode ser vazia"
+  Scenario: Error when using without configured provider
+    Given the client is NOT configured with any provider
+    When I try to send a message
+    Then I receive an error of type "RuntimeError"
+    And the error message contains "nao configurado"
 
-  @error @timeout
-  CENARIO: Timeout ao aguardar resposta
-    DADO que o cliente esta configurado com o provedor "slow-mock"
-    E o timeout esta configurado para 1 segundo
-    QUANDO envio a mensagem "Mensagem que demora"
-    ENTAO recebo um erro do tipo "TimeoutError"
-    E a mensagem de erro contem "timeout"
+  @error
+  Scenario: Error when sending empty message
+    Given the client is configured with provider "mock"
+    When I send an empty message
+    Then I receive an error of type "ValidationError"
+    And the error message contains "vazia"

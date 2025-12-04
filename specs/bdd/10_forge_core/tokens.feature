@@ -1,43 +1,41 @@
-# language: pt
-
 @sdk @tokens @ci-fast
-FUNCIONALIDADE: Contagem de tokens
-  PARA monitorar custos e uso de tokens
-  COMO um desenvolvedor Python
-  QUERO receber informacoes de consumo em cada requisicao
+Feature: Token counting
+  In order to monitor costs and token usage
+  As a Python developer
+  I want to receive consumption information in each request
 
-  CONTEXTO:
-    DADO que o ForgeLLMClient esta instalado
-    E o cliente esta configurado com o provedor "mock"
+  Background:
+    Given the ForgeLLMClient is installed
+    And the client is configured with provider "mock"
 
-  # ========== CENARIOS DE SUCESSO ==========
+  # ========== SUCCESS SCENARIOS ==========
 
   @sync
-  CENARIO: Receber contagem de tokens na resposta sincrona
-    QUANDO envio a mensagem "Ola, mundo!"
-    ENTAO a resposta contem informacao de tokens
-    E tokens.input e um numero maior que zero
-    E tokens.output e um numero maior que zero
-    E tokens.total e igual a input + output
+  Scenario: Receive token count in synchronous response
+    When I send the message "Hello, world!"
+    Then the response contains token information
+    And usage.prompt_tokens is a number greater than zero
+    And usage.completion_tokens is a number greater than zero
+    And usage.total_tokens equals prompt plus completion
 
   @streaming
-  CENARIO: Receber contagem de tokens apos streaming
-    QUANDO envio a mensagem "Conte ate 3" com streaming habilitado
-    E o streaming termina
-    ENTAO a resposta final contem informacao de tokens
-    E tokens.total e um numero maior que zero
+  Scenario: Receive token count after streaming
+    When I send the message "Count to 3" with streaming enabled
+    And the streaming completes
+    Then the final response contains token information
+    And usage.total_tokens is a number greater than zero
 
-  CENARIO: Tokens zerados quando provedor nao informa
-    DADO que o cliente esta configurado com o provedor "mock-sem-tokens"
-    QUANDO envio a mensagem "Mensagem qualquer"
-    ENTAO a resposta contem informacao de tokens
-    E tokens.input e None ou zero
-    E tokens.output e None ou zero
+  Scenario: Tokens zero when provider does not inform
+    Given the client is configured with provider "mock-no-tokens"
+    When I send the message "Any message"
+    Then the response contains token information
+    And usage.prompt_tokens is zero
+    And usage.completion_tokens is zero
 
-  # ========== CENARIOS DE VALIDACAO ==========
+  # ========== VALIDATION SCENARIOS ==========
 
-  CENARIO: Tokens consistentes entre chamadas
-    QUANDO envio a mensagem "Mensagem curta"
-    E armazeno os tokens da resposta
-    E envio a mesma mensagem "Mensagem curta" novamente
-    ENTAO os tokens de input sao aproximadamente iguais
+  Scenario: Tokens consistent between calls
+    When I send the message "Short message"
+    And I store the response tokens
+    And I send the same message "Short message" again
+    Then the input tokens are approximately equal

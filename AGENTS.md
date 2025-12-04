@@ -6,6 +6,13 @@ forgellmClient é um SDK python leve que fornece uma interface única e estável
 
 ## Referências Obrigatórias
 
+### Guias do ForgeLLMClient (SDK)
+- Uso do Client: `docs/guides/client-usage.md` (como usar o SDK, chat, streaming, tools, vision).
+- Modelo de Domínio: `docs/guides/domain-model.md` (ChatResponse, Message, TokenUsage, ImageContent).
+- Tratamento de Erros: `docs/guides/error-handling.md` (exceções, retry, mapeamento de erros por provider).
+- Criação de Providers: `docs/guides/creating-providers.md` (como implementar novos providers).
+
+### Guias do ForgeBase (Framework)
 - Guia de agentes do ForgeBase: `docs/guides/forgebase_guides/agentes-ia/` (início rápido, descoberta, ecossistema).
 - Regras do ForgeBase: `docs/guides/forgebase_guides/usuarios/forgebase-rules.md` (Clean/Hex, CLI-first, offline, persistência YAML + auto-commit Git).
 - Prompts de cada symbiota: `process/symbiotes/<nome>/prompt.md`.
