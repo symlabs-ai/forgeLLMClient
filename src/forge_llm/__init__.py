@@ -10,7 +10,7 @@ Exemplo de uso:
 """
 
 from forge_llm.client import Client
-from forge_llm.domain.entities import ChatResponse, ToolCall
+from forge_llm.domain.entities import ChatResponse, Conversation, ToolCall
 from forge_llm.domain.exceptions import (
     AuthenticationError,
     ConfigurationError,
@@ -21,7 +21,13 @@ from forge_llm.domain.exceptions import (
     ToolNotFoundError,
     ValidationError,
 )
-from forge_llm.domain.value_objects import Message, TokenUsage, ToolDefinition
+from forge_llm.domain.value_objects import (
+    EnhancedMessage,
+    Message,
+    MessageMetadata,
+    TokenUsage,
+    ToolDefinition,
+)
 from forge_llm.mcp import MCPClient, MCPServerConfig, MCPTool, MCPToolAdapter
 from forge_llm.mcp.exceptions import (
     MCPConnectionError,
@@ -42,9 +48,12 @@ __all__ = [
     "ProviderRegistry",
     # Entities
     "ChatResponse",
+    "Conversation",
     "ToolCall",
     # Value Objects
     "Message",
+    "MessageMetadata",
+    "EnhancedMessage",
     "TokenUsage",
     "ToolDefinition",
     # MCP

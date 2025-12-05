@@ -112,6 +112,8 @@ class Client:
         self,
         system: str | None = None,
         max_messages: int | None = None,
+        max_tokens: int | None = None,
+        model: str | None = None,
     ) -> Conversation:
         """
         Criar uma nova conversa.
@@ -119,13 +121,21 @@ class Client:
         Args:
             system: System prompt opcional
             max_messages: Limite maximo de mensagens no historico (None = sem limite)
+            max_tokens: Limite maximo de tokens no historico (None = sem limite)
+            model: Modelo para contagem de tokens (usa default se nao especificado)
 
         Returns:
             Conversation configurada com este client
         """
         if self._provider is None:
             raise RuntimeError("Cliente nao configurado")
-        return Conversation(client=self, system=system, max_messages=max_messages)
+        return Conversation(
+            client=self,
+            system=system,
+            max_messages=max_messages,
+            max_tokens=max_tokens,
+            model=model or self._default_model,
+        )
 
     async def chat(
         self,

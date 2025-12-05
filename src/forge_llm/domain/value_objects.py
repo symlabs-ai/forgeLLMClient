@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Literal, Union
 
 from forge_llm.domain.exceptions import ValidationError
@@ -189,3 +190,110 @@ class ImageContent:
             "data": self.base64_data,
             "media_type": self.media_type,
         }
+
+
+@dataclass(frozen=True, eq=True)
+class MessageMetadata:
+    """
+    Metadados de uma mensagem na conversa.
+
+    Rastreia informacoes de contexto como timestamp, provider e modelo
+    usados para gerar/receber a mensagem.
+    """
+
+    timestamp: datetime = field(default_factory=datetime.now)
+    provider: str | None = None
+    model: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Converter para dicionario."""
+        return {
+            "timestamp": self.timestamp.isoformat(),
+            "provider": self.provider,
+            "model": self.model,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> MessageMetadata:
+        """Criar a partir de dicionario."""
+        timestamp = data.get("timestamp")
+        if isinstance(timestamp, str):
+            try:
+                timestamp = datetime.fromisoformat(timestamp)
+            except ValueError as e:
+                raise ValidationError(f"Timestamp inválido: {timestamp}") from e
+        elif timestamp is None:
+            timestamp = datetime.now()
+
+        return cls(
+            timestamp=timestamp,
+            provider=data.get("provider"),
+            model=data.get("model"),
+        )
+
+
+@dataclass(frozen=True, eq=True)
+class EnhancedMessage:
+    """
+    Mensagem com metadados de contexto.
+
+    Combina Message com MessageMetadata para rastreamento
+    completo do historico da conversa.
+    """
+
+    message: Message
+    metadata: MessageMetadata = field(default_factory=MessageMetadata)
+
+    @property
+    def role(self) -> str:
+        """Role da mensagem."""
+        return self.message.role
+
+    @property
+    def content(self) -> MessageContent:
+        """Conteudo da mensagem."""
+        return self.message.content
+
+    @property
+    def timestamp(self) -> datetime:
+        """Timestamp da mensagem."""
+        return self.metadata.timestamp
+
+    @property
+    def provider(self) -> str | None:
+        """Provider que gerou/recebeu a mensagem."""
+        return self.metadata.provider
+
+    @property
+    def model(self) -> str | None:
+        """Modelo usado."""
+        return self.metadata.model
+
+    def to_dict(self) -> dict[str, Any]:
+        """Converter para dicionario."""
+        return {
+            "message": self.message.to_dict(),
+            "metadata": self.metadata.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> EnhancedMessage:
+        """Criar a partir de dicionario."""
+        if "message" not in data:
+            raise ValidationError("Campo 'message' obrigatório em EnhancedMessage")
+
+        msg_data = data["message"]
+        if "role" not in msg_data or "content" not in msg_data:
+            raise ValidationError("Campos 'role' e 'content' obrigatórios em message")
+
+        meta_data = data.get("metadata", {})
+
+        message = Message(
+            role=msg_data["role"],
+            content=msg_data["content"],
+            name=msg_data.get("name"),
+            tool_call_id=msg_data.get("tool_call_id"),
+        )
+        metadata = MessageMetadata.from_dict(meta_data)
+
+        return cls(message=message, metadata=metadata)

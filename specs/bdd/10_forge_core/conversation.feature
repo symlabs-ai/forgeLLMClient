@@ -49,3 +49,51 @@ Feature: Conversation History
     When eu acesso as mensagens
     Then eu devo receber uma lista de Message
     And cada mensagem deve ter role e content
+
+  # Sprint 14 - Hot-Swap & Context Management
+
+  @conversation-max-tokens
+  Scenario: Conversa com limite de tokens
+    When eu crio uma conversa com max_tokens 100
+    And eu adiciono muitas mensagens longas
+    Then o historico deve ser truncado por tokens
+    And token_count deve ser menor ou igual a 100
+
+  @conversation-metadata
+  Scenario: Mensagens com metadados
+    Given uma conversa criada
+    When eu adiciono mensagem com provider "openai" e model "gpt-4"
+    Then a mensagem deve ter timestamp
+    And a mensagem deve ter provider "openai"
+    And a mensagem deve ter model "gpt-4"
+
+  @conversation-hot-swap
+  Scenario: Hot-swap de provider mid-conversation
+    Given uma conversa com historico
+    When eu troco o provider para "anthropic"
+    Then o historico deve ser preservado
+    And o proximo chat deve usar o novo provider
+
+  @conversation-provider-history
+  Scenario: Rastrear historico de providers
+    Given uma conversa criada
+    When eu uso provider "openai" para uma mensagem
+    And eu troco o provider para "anthropic"
+    And eu uso provider "anthropic" para uma mensagem
+    Then provider_history deve conter "openai" e "anthropic"
+    And last_provider deve ser "anthropic"
+
+  @conversation-serialization
+  Scenario: Serializar e restaurar conversa
+    Given uma conversa com historico
+    When eu serializo a conversa com to_dict
+    And eu restauro com from_dict
+    Then a conversa restaurada deve ter o mesmo historico
+    And a conversa restaurada deve ter o mesmo system prompt
+
+  @conversation-enhanced-messages
+  Scenario: Acessar mensagens com metadados
+    Given uma conversa com historico enriquecido
+    When eu acesso enhanced_messages
+    Then cada mensagem deve ser EnhancedMessage
+    And cada mensagem deve ter metadata com timestamp
