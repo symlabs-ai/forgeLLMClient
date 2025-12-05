@@ -36,6 +36,20 @@ from forge_llm.mcp.exceptions import (
     MCPToolExecutionError,
     MCPToolNotFoundError,
 )
+from forge_llm.observability import (
+    CallbackObserver,
+    ChatCompleteEvent,
+    ChatErrorEvent,
+    ChatStartEvent,
+    LoggingObserver,
+    MetricsObserver,
+    ObservabilityConfig,
+    ObservabilityManager,
+    ObserverPort,
+    RetryEvent,
+    StreamChunkEvent,
+    UsageMetrics,
+)
 from forge_llm.providers.auto_fallback_provider import AllProvidersFailedError
 from forge_llm.providers.registry import ProviderNotFoundError, ProviderRegistry
 
@@ -77,6 +91,19 @@ __all__ = [
     "MCPToolNotFoundError",
     "MCPToolExecutionError",
     "MCPServerNotConnectedError",
+    # Observability
+    "ObservabilityManager",
+    "ObservabilityConfig",
+    "ObserverPort",
+    "LoggingObserver",
+    "MetricsObserver",
+    "UsageMetrics",
+    "CallbackObserver",
+    "ChatStartEvent",
+    "ChatCompleteEvent",
+    "ChatErrorEvent",
+    "RetryEvent",
+    "StreamChunkEvent",
     # Version
     "__version__",
 ]

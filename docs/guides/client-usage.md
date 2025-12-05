@@ -518,11 +518,110 @@ asyncio.run(assistant_with_tools())
 
 ---
 
+## 12. Observabilidade
+
+### 12.1 Logging e Metricas
+
+```python
+from forge_llm import Client, ObservabilityManager, LoggingObserver, MetricsObserver
+
+# Configurar observabilidade
+obs = ObservabilityManager()
+obs.add_observer(LoggingObserver())
+obs.add_observer(MetricsObserver())
+
+# Usar com client
+client = Client(
+    provider="openai",
+    api_key="sk-...",
+    observability=obs
+)
+
+# Chamadas sao logadas automaticamente
+response = await client.chat("Ola!")
+
+# Ver metricas
+metrics = obs._observers[1].metrics  # MetricsObserver
+print(f"Total requests: {metrics.total_requests}")
+print(f"Total tokens: {metrics.total_tokens}")
+```
+
+Para mais detalhes, veja [Guia de Observabilidade](observability.md).
+
+---
+
+## 13. Integracao MCP
+
+### 13.1 Usando Tools MCP
+
+```python
+from forge_llm import Client, MCPClient, MCPServerConfig
+
+# Conectar ao servidor MCP
+mcp = MCPClient()
+await mcp.connect(MCPServerConfig(
+    name="filesystem",
+    command="npx",
+    args=["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+))
+
+# Obter tools
+tool_defs = mcp.get_tool_definitions()
+
+# Usar com client
+client = Client(provider="openai", api_key="sk-...")
+response = await client.chat("Liste arquivos em /tmp", tools=tool_defs)
+
+# Processar tool calls
+if response.has_tool_calls:
+    for tc in response.tool_calls:
+        result = await mcp.call_tool(tc.name, tc.arguments)
+        print(result.content)
+
+await mcp.disconnect_all()
+```
+
+Para mais detalhes, veja [Guia de Integracao MCP](mcp-integration.md).
+
+---
+
+## 14. Auto-Fallback
+
+### 14.1 Fallback entre Providers
+
+```python
+from forge_llm import Client
+from forge_llm.providers.auto_fallback_provider import AutoFallbackProvider
+
+# Criar provider com fallback
+fallback = AutoFallbackProvider(
+    providers=["openai", "anthropic"],
+    api_keys={
+        "openai": "sk-...",
+        "anthropic": "sk-ant-...",
+    },
+)
+
+# Usar normalmente
+client = Client(provider=fallback)
+response = await client.chat("Ola!")
+
+# Se OpenAI falhar (rate limit), tenta Anthropic automaticamente
+print(f"Respondido por: {fallback.last_provider_used}")
+```
+
+Para mais detalhes, veja [Guia de Auto-Fallback](auto-fallback.md).
+
+---
+
 ## Recursos Adicionais
 
 - [Guia do Modelo de Dominio](domain-model.md) - Entidades e Value Objects
 - [Guia de Tratamento de Erros](error-handling.md) - Excecoes e retry
 - [Guia de Criacao de Providers](creating-providers.md) - Adicionar novos providers
+- [Guia de Observabilidade](observability.md) - Logging e metricas
+- [Guia de Integracao MCP](mcp-integration.md) - Tools externas via MCP
+- [Guia de Auto-Fallback](auto-fallback.md) - Alta disponibilidade
 
 ---
 
