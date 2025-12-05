@@ -1,13 +1,14 @@
 """BDD steps for OpenRouter provider tests."""
 
 import asyncio
+import json
 import os
 
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from forge_llm.domain.exceptions import AuthenticationError
-from forge_llm.domain.value_objects import ImageContent, Message
+from forge_llm.domain.value_objects import ImageContent, Message, ResponseFormat
 from forge_llm.providers.openrouter_provider import OpenRouterProvider
 
 # Load scenarios from feature file
@@ -343,3 +344,112 @@ def tool_call_has_argument(context, arg_name):
     response = context["response"]
     tool_call = response.tool_calls[0]
     assert arg_name in tool_call.arguments
+
+
+# JSON Mode / Structured Output steps
+
+
+@given(parsers.parse('a JSON schema for "{name}" with properties name and age'))
+def json_schema_for_person(context, name):
+    """Create a JSON schema for Person."""
+    context["json_schema"] = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "age": {"type": "integer"},
+        },
+        "required": ["name", "age"],
+        "additionalProperties": False,
+    }
+    context["schema_name"] = name
+
+
+@when(parsers.parse('I send a message "{text}" with json response_format'))
+def send_message_with_json_format(context, text):
+    """Send message with JSON response format."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    provider = context["provider"]
+    messages = [Message(role="user", content=text)]
+    response_format = ResponseFormat.json()
+
+    if not context.get("has_real_key"):
+        choice = MagicMock()
+        choice.message.content = '{"name": "John", "age": 30}'
+        choice.message.tool_calls = None
+        choice.finish_reason = "stop"
+
+        usage = MagicMock()
+        usage.prompt_tokens = 10
+        usage.completion_tokens = 8
+
+        mock_response = MagicMock()
+        mock_response.choices = [choice]
+        mock_response.model = "openai/gpt-4o-mini"
+        mock_response.usage = usage
+
+        provider._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+    context["response"] = run_async(
+        provider.chat(messages, response_format=response_format)
+    )
+
+
+@when(parsers.parse('I send a message "{text}" with schema response_format'))
+def send_message_with_schema_format(context, text):
+    """Send message with JSON schema response format."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    provider = context["provider"]
+    messages = [Message(role="user", content=text)]
+    schema = context.get("json_schema", {"type": "object"})
+    name = context.get("schema_name", "Response")
+    response_format = ResponseFormat.json_with_schema(schema, name=name)
+
+    if not context.get("has_real_key"):
+        choice = MagicMock()
+        choice.message.content = '{"name": "Alice", "age": 25}'
+        choice.message.tool_calls = None
+        choice.finish_reason = "stop"
+
+        usage = MagicMock()
+        usage.prompt_tokens = 15
+        usage.completion_tokens = 10
+
+        mock_response = MagicMock()
+        mock_response.choices = [choice]
+        mock_response.model = "openai/gpt-4o-mini"
+        mock_response.usage = usage
+
+        provider._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+    context["response"] = run_async(
+        provider.chat(messages, response_format=response_format)
+    )
+
+
+@then("the response should be valid JSON")
+def response_is_valid_json(context):
+    """Verify response is valid JSON."""
+    response = context["response"]
+    assert response.content is not None
+    # Try to parse as JSON
+    data = json.loads(response.content)
+    context["json_data"] = data
+    assert isinstance(data, dict)
+
+
+@then("the response should match the schema")
+def response_matches_schema(context):
+    """Verify response matches the expected schema."""
+    data = context.get("json_data")
+    schema = context.get("json_schema")
+    assert data is not None
+    assert schema is not None
+    # Basic validation - check required properties exist
+    for prop in schema.get("required", []):
+        assert prop in data, f"Missing required property: {prop}"

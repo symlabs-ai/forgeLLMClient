@@ -44,3 +44,17 @@ Feature: OpenRouter Provider Integration
     When I send a message "What's the weather in Paris?" with tools
     Then I should receive a tool call for "get_weather"
     And the tool call should have argument "location"
+
+  @json-mode @structured-output
+  Scenario: JSON object mode with OpenRouter
+    When I send a message "Return a JSON with name and age" with json response_format
+    Then I should receive a response
+    And the response should be valid JSON
+
+  @json-schema @structured-output
+  Scenario: JSON schema mode with OpenRouter
+    Given a JSON schema for "Person" with properties name and age
+    When I send a message "Return person data" with schema response_format
+    Then I should receive a response
+    And the response should be valid JSON
+    And the response should match the schema

@@ -18,7 +18,12 @@ from openai import (
 from forge_llm.application.ports.provider_port import ProviderPort
 from forge_llm.domain.entities import ChatResponse, ToolCall
 from forge_llm.domain.exceptions import AuthenticationError, RateLimitError
-from forge_llm.domain.value_objects import ImageContent, Message, TokenUsage
+from forge_llm.domain.value_objects import (
+    ImageContent,
+    Message,
+    ResponseFormat,
+    TokenUsage,
+)
 
 # Constantes
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
@@ -199,6 +204,38 @@ class OpenRouterProvider(ProviderPort):
             },
         }
 
+    def _convert_response_format(
+        self, response_format: ResponseFormat | None
+    ) -> dict[str, Any] | None:
+        """
+        Converter ResponseFormat para formato OpenAI Chat Completions.
+
+        OpenRouter usa a API Chat Completions, que suporta response_format
+        no mesmo formato do OpenAI.
+
+        Args:
+            response_format: ResponseFormat
+
+        Returns:
+            Dict no formato OpenAI Chat Completions ou None
+        """
+        if response_format is None or response_format.type == "text":
+            return None
+
+        if response_format.type == "json_object":
+            return {"type": "json_object"}
+
+        # json_schema
+        schema_name = response_format.schema_name or "response_schema"
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": schema_name,
+                "schema": response_format.json_schema,
+                "strict": response_format.strict,
+            },
+        }
+
     def _parse_tool_calls(
         self, tool_calls: list[Any] | None
     ) -> list[ToolCall]:
@@ -238,6 +275,7 @@ class OpenRouterProvider(ProviderPort):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> ChatResponse:
         """
@@ -249,6 +287,7 @@ class OpenRouterProvider(ProviderPort):
             temperature: Temperatura de amostragem (0.0-2.0)
             max_tokens: Maximo de tokens na resposta
             tools: Definicoes de ferramentas
+            response_format: Formato de resposta estruturada
             **kwargs: Argumentos adicionais para a API
 
         Returns:
@@ -271,6 +310,11 @@ class OpenRouterProvider(ProviderPort):
 
             if tools:
                 request_params["tools"] = tools
+
+            # Adicionar response_format se especificado
+            converted_format = self._convert_response_format(response_format)
+            if converted_format:
+                request_params["response_format"] = converted_format
 
             # Adicionar kwargs extras
             request_params.update(kwargs)
@@ -324,6 +368,7 @@ class OpenRouterProvider(ProviderPort):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """
@@ -335,6 +380,7 @@ class OpenRouterProvider(ProviderPort):
             temperature: Temperatura de amostragem (0.0-2.0)
             max_tokens: Maximo de tokens na resposta
             tools: Definicoes de ferramentas
+            response_format: Formato de resposta estruturada
             **kwargs: Argumentos adicionais para a API
 
         Yields:
@@ -358,6 +404,11 @@ class OpenRouterProvider(ProviderPort):
 
             if tools:
                 request_params["tools"] = tools
+
+            # Adicionar response_format se especificado
+            converted_format = self._convert_response_format(response_format)
+            if converted_format:
+                request_params["response_format"] = converted_format
 
             # Adicionar kwargs extras
             request_params.update(kwargs)

@@ -11,7 +11,12 @@ from openai import RateLimitError as OpenAIRateLimitError
 from forge_llm.application.ports.provider_port import ProviderPort
 from forge_llm.domain.entities import ChatResponse, ToolCall
 from forge_llm.domain.exceptions import AuthenticationError, RateLimitError
-from forge_llm.domain.value_objects import ImageContent, Message, TokenUsage
+from forge_llm.domain.value_objects import (
+    ImageContent,
+    Message,
+    ResponseFormat,
+    TokenUsage,
+)
 
 
 class OpenAIProvider(ProviderPort):
@@ -141,7 +146,7 @@ class OpenAIProvider(ProviderPort):
             elif msg.role == "tool":
                 result.append({
                     "type": "function_call_output",
-                    "call_id": msg.tool_call_id,
+                    "call_id": msg.tool_call_id or "",
                     "output": msg.content if isinstance(msg.content, str) else str(msg.content),
                 })
         return result
@@ -158,7 +163,13 @@ class OpenAIProvider(ProviderPort):
         """
         for msg in messages:
             if msg.role == "system":
-                return msg.content
+                content = msg.content
+                if isinstance(content, str):
+                    return content
+                # Convert list content to string
+                return " ".join(
+                    item if isinstance(item, str) else "" for item in content
+                )
         return None
 
     def _convert_tools_to_responses_format(
@@ -190,6 +201,39 @@ class OpenAIProvider(ProviderPort):
                 # Manter formato original para outros tipos
                 result.append(tool)
         return result
+
+    def _convert_response_format(
+        self, response_format: ResponseFormat | None
+    ) -> dict[str, Any] | None:
+        """
+        Converter ResponseFormat para formato OpenAI Responses API.
+
+        A Responses API usa o parametro 'text' com 'format' aninhado.
+        Formato: {"format": {"type": "json_object"}} ou
+                 {"format": {"type": "json_schema", "name": ..., "schema": ...}}
+
+        Args:
+            response_format: ResponseFormat
+
+        Returns:
+            Dict no formato OpenAI Responses API ou None
+        """
+        if response_format is None or response_format.type == "text":
+            return None
+
+        if response_format.type == "json_object":
+            return {"format": {"type": "json_object"}}
+
+        # json_schema
+        schema_name = response_format.schema_name or "response_schema"
+        return {
+            "format": {
+                "type": "json_schema",
+                "name": schema_name,
+                "schema": response_format.json_schema,
+                "strict": response_format.strict,
+            }
+        }
 
     def _parse_response_items(
         self, output: list[Any]
@@ -239,6 +283,7 @@ class OpenAIProvider(ProviderPort):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> ChatResponse:
         """
@@ -250,6 +295,7 @@ class OpenAIProvider(ProviderPort):
             temperature: Temperatura
             max_tokens: Maximo de tokens
             tools: Tools disponiveis
+            response_format: Formato de resposta estruturada (JSON mode)
 
         Returns:
             ChatResponse
@@ -275,6 +321,11 @@ class OpenAIProvider(ProviderPort):
 
             if tools:
                 request_params["tools"] = self._convert_tools_to_responses_format(tools)
+
+            # Adicionar response_format se especificado
+            fmt = self._convert_response_format(response_format)
+            if fmt:
+                request_params["text"] = fmt
 
             response = await self._client.responses.create(**request_params)
 
@@ -318,6 +369,7 @@ class OpenAIProvider(ProviderPort):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """
@@ -329,6 +381,7 @@ class OpenAIProvider(ProviderPort):
             temperature: Temperatura
             max_tokens: Maximo de tokens
             tools: Tools disponiveis
+            response_format: Formato de resposta estruturada (JSON mode)
 
         Yields:
             Chunks de resposta
@@ -351,6 +404,11 @@ class OpenAIProvider(ProviderPort):
 
             if tools:
                 request_params["tools"] = self._convert_tools_to_responses_format(tools)
+
+            # Adicionar response_format se especificado
+            fmt = self._convert_response_format(response_format)
+            if fmt:
+                request_params["text"] = fmt
 
             stream = await self._client.responses.create(**request_params)
 

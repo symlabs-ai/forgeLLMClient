@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 from forge_llm.application.ports.provider_port import ProviderPort
 from forge_llm.domain.entities import ChatResponse, Conversation
 from forge_llm.domain.exceptions import ValidationError
-from forge_llm.domain.value_objects import Message
+from forge_llm.domain.value_objects import Message, ResponseFormat
 from forge_llm.infrastructure.retry import RetryConfig, with_retry
 from forge_llm.providers.registry import ProviderRegistry
 
@@ -153,6 +153,7 @@ class Client:
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> ChatResponse:
         """
@@ -164,6 +165,7 @@ class Client:
             temperature: Temperatura (0-2)
             max_tokens: Maximo de tokens
             tools: Lista de tools
+            response_format: Formato de resposta estruturada (JSON mode)
 
         Returns:
             ChatResponse
@@ -190,6 +192,7 @@ class Client:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 tools=tools,
+                response_format=response_format,
                 **kwargs,
             )
 
@@ -231,10 +234,19 @@ class Client:
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """
         Enviar mensagem e receber resposta em streaming.
+
+        Args:
+            message: Mensagem (str) ou lista de Messages
+            model: Modelo a usar
+            temperature: Temperatura (0-2)
+            max_tokens: Maximo de tokens
+            tools: Lista de tools
+            response_format: Formato de resposta estruturada (JSON mode)
 
         Yields:
             Chunks de resposta
@@ -250,6 +262,7 @@ class Client:
             temperature=temperature,
             max_tokens=max_tokens,
             tools=tools,
+            response_format=response_format,
             **kwargs,
         ):
             yield chunk

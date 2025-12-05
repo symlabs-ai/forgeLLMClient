@@ -25,6 +25,7 @@ from forge_llm.domain.value_objects import (
     EnhancedMessage,
     Message,
     MessageMetadata,
+    ResponseFormat,
     TokenUsage,
     ToolDefinition,
 )
@@ -70,6 +71,7 @@ __all__ = [
     "EnhancedMessage",
     "TokenUsage",
     "ToolDefinition",
+    "ResponseFormat",
     # MCP
     "MCPClient",
     "MCPServerConfig",

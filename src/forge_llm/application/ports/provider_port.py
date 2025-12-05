@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from forge_llm.domain.entities import ChatResponse
-from forge_llm.domain.value_objects import Message
+from forge_llm.domain.value_objects import Message, ResponseFormat
 
 
 class ProviderPort(ABC):
@@ -24,6 +24,7 @@ class ProviderPort(ABC):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> ChatResponse:
         """
@@ -35,6 +36,7 @@ class ProviderPort(ABC):
             temperature: Temperatura de sampling (0-2)
             max_tokens: Maximo de tokens na resposta
             tools: Lista de tools disponiveis
+            response_format: Formato de resposta estruturada (JSON mode)
             **kwargs: Parametros adicionais do provider
 
         Returns:
@@ -55,6 +57,7 @@ class ProviderPort(ABC):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """
@@ -66,6 +69,7 @@ class ProviderPort(ABC):
             temperature: Temperatura de sampling (0-2)
             max_tokens: Maximo de tokens na resposta
             tools: Lista de tools disponiveis
+            response_format: Formato de resposta estruturada (JSON mode)
             **kwargs: Parametros adicionais do provider
 
         Yields:

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from forge_llm.domain.exceptions import AuthenticationError, RateLimitError
-from forge_llm.domain.value_objects import ImageContent, Message
+from forge_llm.domain.value_objects import ImageContent, Message, ResponseFormat
 from forge_llm.providers.openrouter_provider import (
     DEFAULT_MODEL,
     OPENROUTER_BASE_URL,
@@ -560,3 +560,128 @@ class TestOpenRouterToolCallParsing:
 
         assert len(result) == 1
         assert result[0].arguments == {}
+
+
+class TestOpenRouterResponseFormat:
+    """Tests for response_format handling."""
+
+    @pytest.fixture
+    def provider(self):
+        """Create provider instance."""
+        return OpenRouterProvider(api_key="test-key")
+
+    def test_convert_response_format_none(self, provider):
+        """None response_format should return None."""
+        result = provider._convert_response_format(None)
+        assert result is None
+
+    def test_convert_response_format_text(self, provider):
+        """Text response_format should return None (no special handling needed)."""
+        result = provider._convert_response_format(ResponseFormat.text())
+        assert result is None
+
+    def test_convert_response_format_json_object(self, provider):
+        """JSON object response_format should return json_object type."""
+        result = provider._convert_response_format(ResponseFormat.json())
+        assert result == {"type": "json_object"}
+
+    def test_convert_response_format_json_schema(self, provider):
+        """JSON schema response_format should return full schema structure."""
+        schema = {"type": "object", "properties": {"name": {"type": "string"}}}
+        response_format = ResponseFormat.json_with_schema(schema, name="TestSchema")
+        result = provider._convert_response_format(response_format)
+
+        assert result["type"] == "json_schema"
+        assert result["json_schema"]["name"] == "TestSchema"
+        assert result["json_schema"]["schema"] == schema
+        assert result["json_schema"]["strict"] is True
+
+    def test_convert_response_format_json_schema_default_name(self, provider):
+        """JSON schema without name should use default name."""
+        schema = {"type": "object"}
+        response_format = ResponseFormat.json_with_schema(schema)
+        result = provider._convert_response_format(response_format)
+
+        assert result["json_schema"]["name"] == "response_schema"
+
+    def test_convert_response_format_json_schema_non_strict(self, provider):
+        """JSON schema with strict=False should pass strict flag."""
+        schema = {"type": "object"}
+        response_format = ResponseFormat.json_with_schema(schema, strict=False)
+        result = provider._convert_response_format(response_format)
+
+        assert result["json_schema"]["strict"] is False
+
+    @pytest.fixture
+    def mock_response(self):
+        """Create mock API response."""
+        choice = MagicMock()
+        choice.message.content = '{"name": "John"}'
+        choice.message.tool_calls = None
+        choice.finish_reason = "stop"
+
+        usage = MagicMock()
+        usage.prompt_tokens = 10
+        usage.completion_tokens = 8
+
+        response = MagicMock()
+        response.choices = [choice]
+        response.model = "openai/gpt-4o-mini"
+        response.usage = usage
+
+        return response
+
+    @pytest.mark.asyncio
+    async def test_chat_with_response_format_json(self, provider, mock_response):
+        """Test chat with json response_format."""
+        provider._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Give me a JSON")]
+        response_format = ResponseFormat.json()
+        response = await provider.chat(messages, response_format=response_format)
+
+        call_kwargs = provider._client.chat.completions.create.call_args.kwargs
+        assert call_kwargs["response_format"] == {"type": "json_object"}
+        assert response.content == '{"name": "John"}'
+
+    @pytest.mark.asyncio
+    async def test_chat_with_response_format_schema(self, provider, mock_response):
+        """Test chat with json_schema response_format."""
+        provider._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        schema = {"type": "object", "properties": {"name": {"type": "string"}}}
+        messages = [Message(role="user", content="Give me a person")]
+        response_format = ResponseFormat.json_with_schema(schema, name="Person")
+        await provider.chat(messages, response_format=response_format)
+
+        call_kwargs = provider._client.chat.completions.create.call_args.kwargs
+        assert call_kwargs["response_format"]["type"] == "json_schema"
+        assert call_kwargs["response_format"]["json_schema"]["name"] == "Person"
+
+    @pytest.mark.asyncio
+    async def test_chat_stream_with_response_format(self, provider):
+        """Test streaming with response_format."""
+
+        async def mock_stream():
+            chunk = MagicMock()
+            chunk.choices = [MagicMock()]
+            chunk.choices[0].delta.content = '{"test": true}'
+            chunk.choices[0].finish_reason = "stop"
+            yield chunk
+
+        provider._client.chat.completions.create = AsyncMock(
+            return_value=mock_stream()
+        )
+
+        messages = [Message(role="user", content="JSON please")]
+        response_format = ResponseFormat.json()
+        chunks = []
+        async for chunk in provider.chat_stream(messages, response_format=response_format):
+            chunks.append(chunk)
+
+        call_kwargs = provider._client.chat.completions.create.call_args.kwargs
+        assert call_kwargs["response_format"] == {"type": "json_object"}

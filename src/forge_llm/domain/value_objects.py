@@ -193,6 +193,148 @@ class ImageContent:
 
 
 @dataclass(frozen=True, eq=True)
+class ResponseFormat:
+    """
+    Formato de resposta estruturada para LLMs.
+
+    Suporta modos:
+    - "text": Resposta padrão em texto livre
+    - "json_object": Resposta JSON (modelo escolhe estrutura)
+    - "json_schema": Resposta JSON validada contra schema
+
+    Para json_schema, forneça um JSON Schema ou classe Pydantic.
+
+    Exemplo:
+        # JSON livre
+        format = ResponseFormat(type="json_object")
+
+        # Com schema
+        format = ResponseFormat(
+            type="json_schema",
+            json_schema={
+                "type": "object",
+                "properties": {"name": {"type": "string"}},
+                "required": ["name"]
+            }
+        )
+
+        # Com Pydantic (requer pydantic instalado)
+        from pydantic import BaseModel
+        class Person(BaseModel):
+            name: str
+            age: int
+        format = ResponseFormat.from_pydantic(Person)
+    """
+
+    type: Literal["text", "json_object", "json_schema"] = "text"
+    json_schema: dict[str, Any] | None = None
+    schema_name: str | None = None
+    strict: bool = True
+
+    def __post_init__(self) -> None:
+        """Validar apos inicializacao."""
+        self._validate()
+
+    def _validate(self) -> None:
+        """Validar invariantes."""
+        valid_types = {"text", "json_object", "json_schema"}
+        if self.type not in valid_types:
+            raise ValidationError(f"Tipo de formato invalido: {self.type}")
+
+        if self.type == "json_schema" and not self.json_schema:
+            raise ValidationError("json_schema obrigatorio para type='json_schema'")
+
+        if self.type != "json_schema" and self.json_schema:
+            raise ValidationError("json_schema so pode ser usado com type='json_schema'")
+
+    @classmethod
+    def text(cls) -> ResponseFormat:
+        """Criar formato texto padrão."""
+        return cls(type="text")
+
+    @classmethod
+    def json(cls) -> ResponseFormat:
+        """Criar formato JSON livre."""
+        return cls(type="json_object")
+
+    @classmethod
+    def json_with_schema(
+        cls,
+        schema: dict[str, Any],
+        name: str | None = None,
+        strict: bool = True,
+    ) -> ResponseFormat:
+        """
+        Criar formato JSON com schema.
+
+        Args:
+            schema: JSON Schema dict
+            name: Nome do schema (opcional, gerado automaticamente)
+            strict: Se True, força resposta exata ao schema
+        """
+        return cls(
+            type="json_schema",
+            json_schema=schema,
+            schema_name=name,
+            strict=strict,
+        )
+
+    @classmethod
+    def from_pydantic(  # type: ignore[valid-type]
+        cls, model: type[Any], strict: bool = True
+    ) -> ResponseFormat:
+        """
+        Criar formato a partir de modelo Pydantic.
+
+        Args:
+            model: Classe Pydantic (BaseModel)
+            strict: Se True, força resposta exata ao schema
+
+        Returns:
+            ResponseFormat configurado com schema do modelo
+
+        Raises:
+            ValidationError: Se pydantic não disponível ou modelo inválido
+
+        Note:
+            When strict=True, adds 'additionalProperties: false' to the root
+            schema for OpenAI API compatibility (required for structured outputs).
+        """
+        try:
+            from pydantic import BaseModel
+        except ImportError as e:
+            raise ValidationError("pydantic necessario para from_pydantic()") from e
+
+        if not isinstance(model, type) or not issubclass(model, BaseModel):
+            raise ValidationError("model deve ser subclasse de pydantic.BaseModel")
+
+        schema: dict[str, Any] = model.model_json_schema()  # type: ignore[attr-defined]
+        name: str = model.__name__  # type: ignore[attr-defined]
+
+        # Add additionalProperties: false for OpenAI strict mode compatibility
+        if strict and schema.get("type") == "object":
+            schema = dict(schema)  # Make a copy to avoid mutating cached schema
+            schema["additionalProperties"] = False
+
+        return cls(
+            type="json_schema",
+            json_schema=schema,
+            schema_name=name,
+            strict=strict,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Converter para dicionario."""
+        result: dict[str, Any] = {"type": self.type}
+        if self.json_schema:
+            result["json_schema"] = self.json_schema
+        if self.schema_name:
+            result["schema_name"] = self.schema_name
+        result["strict"] = self.strict
+        return result
+
+
+@dataclass(frozen=True, eq=True)
 class MessageMetadata:
     """
     Metadados de uma mensagem na conversa.
