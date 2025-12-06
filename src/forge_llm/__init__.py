@@ -29,6 +29,26 @@ from forge_llm.domain.value_objects import (
     TokenUsage,
     ToolDefinition,
 )
+from forge_llm.infrastructure import (
+    CacheConfig,
+    CacheKey,
+    CachePort,
+    CacheStats,
+    CompositeRateLimiter,
+    InMemoryCache,
+    NoOpCache,
+    NoOpRateLimiter,
+    RateLimitConfig,
+    RateLimiterPort,
+    RateLimitExceededError,
+    RateLimitStats,
+    RetryCallback,
+    RetryConfig,
+    TokenBucketRateLimiter,
+    create_rate_limiter,
+    retry_decorator,
+    with_retry,
+)
 from forge_llm.mcp import MCPClient, MCPServerConfig, MCPTool, MCPToolAdapter
 from forge_llm.mcp.exceptions import (
     MCPConnectionError,
@@ -59,6 +79,13 @@ from forge_llm.persistence import (
 )
 from forge_llm.providers.auto_fallback_provider import AllProvidersFailedError
 from forge_llm.providers.registry import ProviderNotFoundError, ProviderRegistry
+from forge_llm.utils.summarizer import (
+    ConversationSummarizer,
+    NoOpSummarizer,
+    SummarizerConfig,
+    SummarizerPort,
+    SummaryResult,
+)
 
 __version__ = "0.1.0"
 
@@ -99,6 +126,7 @@ __all__ = [
     "MCPToolNotFoundError",
     "MCPToolExecutionError",
     "MCPServerNotConnectedError",
+    "RateLimitExceededError",
     # Observability
     "ObservabilityManager",
     "ObservabilityConfig",
@@ -117,6 +145,32 @@ __all__ = [
     "StoredConversation",
     "JSONConversationStore",
     "InMemoryConversationStore",
+    # Infrastructure - Cache
+    "CacheConfig",
+    "CacheKey",
+    "CachePort",
+    "CacheStats",
+    "InMemoryCache",
+    "NoOpCache",
+    # Infrastructure - Rate Limiter
+    "RateLimitConfig",
+    "RateLimitStats",
+    "RateLimiterPort",
+    "TokenBucketRateLimiter",
+    "NoOpRateLimiter",
+    "CompositeRateLimiter",
+    "create_rate_limiter",
+    # Infrastructure - Retry
+    "RetryConfig",
+    "RetryCallback",
+    "with_retry",
+    "retry_decorator",
+    # Summarizer
+    "SummarizerConfig",
+    "SummaryResult",
+    "SummarizerPort",
+    "ConversationSummarizer",
+    "NoOpSummarizer",
     # Version
     "__version__",
 ]

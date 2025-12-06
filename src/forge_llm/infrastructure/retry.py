@@ -1,8 +1,10 @@
 """Retry logic with exponential backoff for API calls."""
 
+from __future__ import annotations
+
 import asyncio
 import random
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from functools import wraps
 from typing import Any, TypeVar
@@ -16,6 +18,9 @@ from forge_llm.domain.exceptions import (
 )
 
 T = TypeVar("T")
+
+# Type alias for retry callback
+RetryCallback = Callable[[int, int, float, Exception, str], Awaitable[None]]
 
 
 @dataclass
@@ -68,6 +73,7 @@ async def with_retry(
     config: RetryConfig,
     provider: str,
     *args: Any,
+    on_retry: RetryCallback | None = None,
     **kwargs: Any,
 ) -> Any:
     """Execute an async function with retry logic.
@@ -77,6 +83,8 @@ async def with_retry(
         config: Retry configuration
         provider: Provider name for error messages
         *args: Positional arguments for func
+        on_retry: Optional callback called on each retry with
+                  (attempt, max_attempts, delay_seconds, error, provider)
         **kwargs: Keyword arguments for func
 
     Returns:
@@ -114,6 +122,10 @@ async def with_retry(
             if isinstance(e, RateLimitError) and e.retry_after:
                 delay = max(delay, float(e.retry_after))
 
+            # Call retry callback if provided
+            if on_retry is not None:
+                await on_retry(attempt + 1, config.max_retries + 1, delay, e, provider)
+
             await asyncio.sleep(delay)
 
     # Should never reach here, but just in case
@@ -144,7 +156,7 @@ def retry_decorator(
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
-            return await with_retry(func, config, provider, *args, **kwargs)
+            return await with_retry(func, config, provider, *args, **kwargs)  # type: ignore[no-any-return]
 
         return wrapper  # type: ignore[return-value]
 

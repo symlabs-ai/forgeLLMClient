@@ -1,1 +1,1 @@
-"""Unit tests for infrastructure layer."""
+"""Infrastructure unit tests."""
