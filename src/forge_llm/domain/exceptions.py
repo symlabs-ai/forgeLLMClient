@@ -27,15 +27,14 @@ class ProviderError(ForgeError):
         self.status_code = status_code
 
 
-class AuthenticationError(ForgeError):
+class AuthenticationError(ProviderError):
     """Erro de autenticacao com provedor."""
 
     def __init__(self, message: str, provider: str) -> None:
-        super().__init__(message)
-        self.provider = provider
+        super().__init__(message, provider, status_code=401)
 
 
-class RateLimitError(ForgeError):
+class RateLimitError(ProviderError):
     """Erro de rate limit do provedor."""
 
     def __init__(
@@ -44,8 +43,7 @@ class RateLimitError(ForgeError):
         provider: str,
         retry_after: int | None = None,
     ) -> None:
-        super().__init__(message)
-        self.provider = provider
+        super().__init__(message, provider, status_code=429)
         self.retry_after = retry_after
 
 
@@ -72,7 +70,7 @@ class ToolCallNotFoundError(ForgeError):
         self.tool_call_id = tool_call_id
 
 
-class APITimeoutError(ForgeError):
+class APITimeoutError(ProviderError):
     """Erro de timeout na chamada de API."""
 
     def __init__(
@@ -81,12 +79,11 @@ class APITimeoutError(ForgeError):
         provider: str,
         timeout: float | None = None,
     ) -> None:
-        super().__init__(message)
-        self.provider = provider
+        super().__init__(message, provider, status_code=408)
         self.timeout = timeout
 
 
-class APIError(ForgeError):
+class APIError(ProviderError):
     """Erro generico de API."""
 
     def __init__(
@@ -96,9 +93,7 @@ class APIError(ForgeError):
         status_code: int | None = None,
         retryable: bool = False,
     ) -> None:
-        super().__init__(message)
-        self.provider = provider
-        self.status_code = status_code
+        super().__init__(message, provider, status_code)
         self.retryable = retryable
 
 

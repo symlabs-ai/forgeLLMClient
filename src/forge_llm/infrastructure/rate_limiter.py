@@ -7,6 +7,8 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
+from forge_llm.domain.exceptions import ForgeError
+
 
 @dataclass
 class RateLimitConfig:
@@ -43,7 +45,7 @@ class RateLimitStats:
         return self.total_wait_time_ms / self.waits_triggered if self.waits_triggered > 0 else 0.0
 
 
-class RateLimitExceededError(Exception):
+class RateLimitExceededError(ForgeError):
     """Raised when rate limit is exceeded and waiting is disabled."""
 
     def __init__(

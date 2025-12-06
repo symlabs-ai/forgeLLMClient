@@ -12,11 +12,14 @@ Exemplo de uso:
 from forge_llm.client import Client
 from forge_llm.domain.entities import ChatResponse, Conversation, ToolCall
 from forge_llm.domain.exceptions import (
+    APIError,
+    APITimeoutError,
     AuthenticationError,
     ConfigurationError,
     ForgeError,
     ProviderError,
     RateLimitError,
+    RetryExhaustedError,
     ToolCallNotFoundError,
     ToolNotFoundError,
     ValidationError,
@@ -117,22 +120,29 @@ __all__ = [
     "MCPServerConfig",
     "MCPTool",
     "MCPToolAdapter",
-    # Exceptions
+    # Exceptions - Base
     "ForgeError",
     "ValidationError",
+    "ConfigurationError",
+    # Exceptions - Provider-related (inherit from ProviderError)
     "ProviderError",
     "AuthenticationError",
     "RateLimitError",
-    "ConfigurationError",
+    "APIError",
+    "APITimeoutError",
+    "RetryExhaustedError",
     "ProviderNotFoundError",
+    "AllProvidersFailedError",
+    # Exceptions - Tool-related
     "ToolNotFoundError",
     "ToolCallNotFoundError",
-    "AllProvidersFailedError",
+    # Exceptions - MCP-related
     "MCPError",
     "MCPConnectionError",
     "MCPToolNotFoundError",
     "MCPToolExecutionError",
     "MCPServerNotConnectedError",
+    # Exceptions - Rate Limiting
     "RateLimitExceededError",
     # Observability
     "ObservabilityManager",
