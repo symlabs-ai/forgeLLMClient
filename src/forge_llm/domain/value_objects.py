@@ -280,14 +280,14 @@ class ResponseFormat:
         )
 
     @classmethod
-    def from_pydantic(  # type: ignore[valid-type]
-        cls, model: type[Any], strict: bool = True
+    def from_pydantic(
+        cls, pydantic_model: type[Any], strict: bool = True  # type: ignore[valid-type]
     ) -> ResponseFormat:
         """
         Criar formato a partir de modelo Pydantic.
 
         Args:
-            model: Classe Pydantic (BaseModel)
+            pydantic_model: Classe Pydantic (BaseModel)
             strict: Se True, força resposta exata ao schema
 
         Returns:
@@ -305,11 +305,11 @@ class ResponseFormat:
         except ImportError as e:
             raise ValidationError("pydantic necessario para from_pydantic()") from e
 
-        if not isinstance(model, type) or not issubclass(model, BaseModel):
-            raise ValidationError("model deve ser subclasse de pydantic.BaseModel")
+        if not isinstance(pydantic_model, type) or not issubclass(pydantic_model, BaseModel):
+            raise ValidationError("pydantic_model deve ser subclasse de pydantic.BaseModel")
 
-        schema: dict[str, Any] = model.model_json_schema()  # type: ignore[attr-defined]
-        name: str = model.__name__  # type: ignore[attr-defined]
+        schema: dict[str, Any] = pydantic_model.model_json_schema()  # type: ignore[attr-defined]
+        name: str = pydantic_model.__name__  # type: ignore[attr-defined]
 
         # Add additionalProperties: false for OpenAI strict mode compatibility
         if strict and schema.get("type") == "object":

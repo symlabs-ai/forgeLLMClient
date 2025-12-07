@@ -86,7 +86,7 @@ class ProviderRegistry:
                 f"api_key e obrigatorio para o provedor '{name}'"
             )
 
-        return provider_class(api_key=api_key, **kwargs)
+        return provider_class(api_key=api_key, **kwargs)  # type: ignore[call-arg]
 
     @classmethod
     def list_available(cls) -> list[str]:

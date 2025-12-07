@@ -5,7 +5,7 @@ from typing import Any
 
 from forge_llm.application.ports.provider_port import ProviderPort
 from forge_llm.domain.entities import ChatResponse
-from forge_llm.domain.value_objects import Message, TokenUsage
+from forge_llm.domain.value_objects import Message, ResponseFormat, TokenUsage
 
 
 class MockNoTokensProvider(ProviderPort):
@@ -51,6 +51,7 @@ class MockNoTokensProvider(ProviderPort):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> ChatResponse:
         """Retornar resposta mock sem tokens."""
@@ -72,6 +73,7 @@ class MockNoTokensProvider(ProviderPort):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        response_format: ResponseFormat | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """Stream mock que retorna chunks simulados."""

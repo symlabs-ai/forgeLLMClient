@@ -101,7 +101,7 @@ class ResponseValidator:
                 raw_content=text,
             ) from e
 
-        return data
+        return data  # type: ignore[no-any-return]
 
     def is_valid(self, response: ChatResponse) -> bool:
         """

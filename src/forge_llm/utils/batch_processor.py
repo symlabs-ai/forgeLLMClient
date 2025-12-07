@@ -43,7 +43,7 @@ class BatchProcessor:
         self,
         message_batches: list[list[Message]],
         **kwargs: Any,
-    ) -> list[ChatResponse | Exception]:
+    ) -> list[ChatResponse | BaseException]:
         """
         Processar multiplos batches de mensagens em paralelo.
 
