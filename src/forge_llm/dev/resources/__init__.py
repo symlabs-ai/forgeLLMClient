@@ -1,0 +1,1 @@
+"""Recursos do modulo dev."""
