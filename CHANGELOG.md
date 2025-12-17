@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-12-17
+
+### Added
+- **SummarizeCompactor production-ready features**
+  - Error handling with retry logic and exponential backoff
+  - `max_retries` parameter (default 3) for configurable retry attempts
+  - `retry_delay` parameter (default 1.0s) with exponential backoff
+  - Fallback to truncation when all retries fail
+  - Logging for warnings and errors during summarization
+- **AsyncSummarizeCompactor** for async applications
+  - Full async implementation with `await compactor.compact()`
+  - Same API as sync version
+  - Uses `asyncio.sleep()` for non-blocking retry delays
+- **Comprehensive tests** for SummarizeCompactor
+  - Tests for `prompt_file` parameter loading
+  - Tests for retry logic and fallback behavior
+  - Tests for AsyncSummarizeCompactor (24 tests)
+- **Updated examples** in `docs/product/examples/`
+  - `session_compaction.py`: retry config, custom prompts, async examples
+  - `async_chat.py`: session management, AsyncSummarizeCompactor examples
+
+### Changed
+- Examples moved from `/examples/` to `/docs/product/examples/`
+- `AsyncChatAgent` and `AsyncSummarizeCompactor` now exported from main package
+- Test suite expanded to 542+ unit tests
+
 ## [0.3.0] - 2024-12-17
 
 ### Added

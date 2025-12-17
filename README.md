@@ -1,9 +1,9 @@
 # ForgeLLM
 
-[![Tests](https://img.shields.io/badge/tests-377%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-542%20passing-brightgreen)]()
 [![Coverage](https://img.shields.io/badge/coverage-80%25-green)]()
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)]()
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)]()
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)]()
 
 Unified LLM client with provider portability. Write once, run on any provider.
@@ -85,12 +85,10 @@ for chunk in agent.stream_chat("Tell me a story"):
 
 ```python
 import asyncio
-from forge_llm.application.agents import AsyncChatAgent
-from forge_llm.domain.entities import ProviderConfig
+from forge_llm import AsyncChatAgent
 
 async def main():
-    config = ProviderConfig(provider="openai", api_key="sk-...", model="gpt-4o")
-    agent = AsyncChatAgent(config)
+    agent = AsyncChatAgent(provider="openai", api_key="sk-...", model="gpt-4o")
 
     # Single async call
     response = await agent.chat("Hello!")
@@ -120,6 +118,32 @@ session = ChatSession(
 agent.chat("My name is John", session=session)
 response = agent.chat("What's my name?", session=session)
 print(response.content)  # "Your name is John"
+```
+
+### LLM-Based Context Summarization
+
+```python
+from forge_llm import ChatAgent, ChatSession, SummarizeCompactor
+
+agent = ChatAgent(provider="openai", api_key="sk-...")
+
+# SummarizeCompactor uses LLM to compress old messages
+compactor = SummarizeCompactor(
+    agent=agent,
+    summary_tokens=200,   # Target summary size
+    keep_recent=4,        # Keep last 4 messages intact
+    max_retries=3,        # Retry on API failures
+)
+
+session = ChatSession(
+    system_prompt="You are a helpful assistant",
+    max_tokens=4000,
+    compactor=compactor,
+)
+
+# Old messages are summarized instead of truncated
+agent.chat("My name is Alice, I'm a data scientist", session=session)
+# ... many messages later, context is preserved via summaries
 ```
 
 ### Tool Calling
@@ -222,13 +246,13 @@ src/forge_llm/
 
 ## Examples
 
-See the `examples/` directory for complete examples:
+See the `docs/product/examples/` directory for complete examples:
 
 - `basic_chat.py` - Getting started with basic chat
-- `async_chat.py` - Async/await patterns
+- `async_chat.py` - Async/await patterns and AsyncSummarizeCompactor
 - `tool_calling.py` - Custom tool definitions
 - `openrouter_usage.py` - Multi-provider access
-- `session_compaction.py` - Context management strategies
+- `session_compaction.py` - Context management with retry and custom prompts
 - `structured_logging.py` - Production logging setup
 
 ## Development
