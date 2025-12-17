@@ -279,13 +279,223 @@ class TestAsyncAnthropicAdapter:
         assert result["usage"]["total_tokens"] == 8
 
 
+class TestAsyncOpenAIAdapterStream:
+    """Tests for AsyncOpenAIAdapter.stream()."""
+
+    @pytest.mark.asyncio
+    async def test_stream_yields_content_chunks(self):
+        """stream() should yield content chunks."""
+        from forge_llm.infrastructure.providers import AsyncOpenAIAdapter
+
+        mock_client = AsyncMock()
+
+        # Create mock chunks
+        chunk1 = MagicMock()
+        chunk1.choices = [MagicMock()]
+        chunk1.choices[0].delta.content = "Hello"
+        chunk1.choices[0].delta.tool_calls = None
+        chunk1.choices[0].finish_reason = None
+
+        chunk2 = MagicMock()
+        chunk2.choices = [MagicMock()]
+        chunk2.choices[0].delta.content = " World"
+        chunk2.choices[0].delta.tool_calls = None
+        chunk2.choices[0].finish_reason = None
+
+        chunk3 = MagicMock()
+        chunk3.choices = [MagicMock()]
+        chunk3.choices[0].delta.content = None
+        chunk3.choices[0].delta.tool_calls = None
+        chunk3.choices[0].finish_reason = "stop"
+
+        async def mock_stream_iter():
+            for chunk in [chunk1, chunk2, chunk3]:
+                yield chunk
+
+        mock_client.chat.completions.create = AsyncMock(return_value=mock_stream_iter())
+
+        config = ProviderConfig(provider="openai", api_key="test-key")
+        adapter = AsyncOpenAIAdapter(config)
+        adapter._client = mock_client
+
+        chunks = []
+        async for chunk in adapter.stream([{"role": "user", "content": "Hi"}]):
+            chunks.append(chunk)
+
+        assert len(chunks) == 3
+        assert chunks[0]["content"] == "Hello"
+        assert chunks[1]["content"] == " World"
+        assert chunks[2]["finish_reason"] == "stop"
+
+    @pytest.mark.asyncio
+    async def test_stream_handles_tool_calls(self):
+        """stream() should handle tool call chunks."""
+        from forge_llm.infrastructure.providers import AsyncOpenAIAdapter
+
+        mock_client = AsyncMock()
+
+        # Create mock tool call chunk
+        tool_call_mock = MagicMock()
+        tool_call_mock.index = 0
+        tool_call_mock.id = "call_123"
+        tool_call_mock.function.name = "get_weather"
+        tool_call_mock.function.arguments = '{"loc": "NYC"}'
+
+        chunk1 = MagicMock()
+        chunk1.choices = [MagicMock()]
+        chunk1.choices[0].delta.content = None
+        chunk1.choices[0].delta.tool_calls = [tool_call_mock]
+        chunk1.choices[0].finish_reason = None
+
+        chunk2 = MagicMock()
+        chunk2.choices = [MagicMock()]
+        chunk2.choices[0].delta.content = None
+        chunk2.choices[0].delta.tool_calls = None
+        chunk2.choices[0].finish_reason = "tool_calls"
+
+        async def mock_stream_iter():
+            for chunk in [chunk1, chunk2]:
+                yield chunk
+
+        mock_client.chat.completions.create = AsyncMock(return_value=mock_stream_iter())
+
+        config = ProviderConfig(provider="openai", api_key="test-key")
+        adapter = AsyncOpenAIAdapter(config)
+        adapter._client = mock_client
+
+        chunks = []
+        async for chunk in adapter.stream(
+            [{"role": "user", "content": "Weather?"}],
+            config={"tools": [{"type": "function", "function": {"name": "get_weather"}}]},
+        ):
+            chunks.append(chunk)
+
+        # Should have tool_calls in final chunk
+        tool_chunk = next((c for c in chunks if c.get("finish_reason") == "tool_calls"), None)
+        assert tool_chunk is not None
+        assert "tool_calls" in tool_chunk
+
+
+class TestAsyncAnthropicAdapterStream:
+    """Tests for AsyncAnthropicAdapter.stream()."""
+
+    @pytest.mark.asyncio
+    async def test_stream_yields_content_chunks(self):
+        """stream() should yield content chunks."""
+        from forge_llm.infrastructure.providers import AsyncAnthropicAdapter
+
+        mock_client = AsyncMock()
+
+        # Create mock events
+        event1 = MagicMock()
+        event1.type = "content_block_delta"
+        event1.delta.text = "Hello"
+
+        event2 = MagicMock()
+        event2.type = "content_block_delta"
+        event2.delta.text = " World"
+
+        event3 = MagicMock()
+        event3.type = "message_stop"
+
+        class MockStream:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                pass
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                if not hasattr(self, "_events"):
+                    self._events = iter([event1, event2, event3])
+                try:
+                    return next(self._events)
+                except StopIteration:
+                    raise StopAsyncIteration from None
+
+        mock_client.messages.stream = MagicMock(return_value=MockStream())
+
+        config = ProviderConfig(provider="anthropic", api_key="test-key")
+        adapter = AsyncAnthropicAdapter(config)
+        adapter._client = mock_client
+
+        chunks = []
+        async for chunk in adapter.stream([{"role": "user", "content": "Hi"}]):
+            chunks.append(chunk)
+
+        assert len(chunks) >= 2
+        content_chunks = [c for c in chunks if c.get("content")]
+        assert any("Hello" in c["content"] for c in content_chunks)
+
+    @pytest.mark.asyncio
+    async def test_stream_handles_tool_use(self):
+        """stream() should handle tool use events."""
+        from forge_llm.infrastructure.providers import AsyncAnthropicAdapter
+
+        mock_client = AsyncMock()
+
+        # Create mock events for tool use
+        event1 = MagicMock()
+        event1.type = "content_block_start"
+        event1.content_block.type = "tool_use"
+        event1.content_block.id = "tool_123"
+        event1.content_block.name = "get_weather"
+
+        event2 = MagicMock()
+        event2.type = "content_block_delta"
+        event2.delta.partial_json = '{"location": "NYC"}'
+        delattr(event2.delta, "text")  # Remove text attribute
+
+        event3 = MagicMock()
+        event3.type = "content_block_stop"
+
+        event4 = MagicMock()
+        event4.type = "message_stop"
+
+        class MockStream:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                pass
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                if not hasattr(self, "_events"):
+                    self._events = iter([event1, event2, event3, event4])
+                try:
+                    return next(self._events)
+                except StopIteration:
+                    raise StopAsyncIteration from None
+
+        mock_client.messages.stream = MagicMock(return_value=MockStream())
+
+        config = ProviderConfig(provider="anthropic", api_key="test-key")
+        adapter = AsyncAnthropicAdapter(config)
+        adapter._client = mock_client
+
+        chunks = []
+        async for chunk in adapter.stream(
+            [{"role": "user", "content": "Weather?"}],
+            config={"tools": [{"type": "function", "function": {"name": "get_weather"}}]},
+        ):
+            chunks.append(chunk)
+
+        # Should have tool_calls in final chunk
+        tool_chunk = next((c for c in chunks if c.get("finish_reason") == "tool_calls"), None)
+        assert tool_chunk is not None
+
+
 class TestAsyncProviderPort:
     """Tests for IAsyncLLMProviderPort protocol."""
 
     def test_protocol_is_runtime_checkable(self):
         """IAsyncLLMProviderPort should be runtime checkable."""
-        from typing import runtime_checkable
-
         from forge_llm.application.ports import IAsyncLLMProviderPort
 
         # Check that it can be used with isinstance
@@ -294,11 +504,24 @@ class TestAsyncProviderPort:
 
     def test_async_openai_adapter_implements_protocol(self):
         """AsyncOpenAIAdapter should implement IAsyncLLMProviderPort."""
-        from forge_llm.application.ports import IAsyncLLMProviderPort
         from forge_llm.infrastructure.providers import AsyncOpenAIAdapter
 
         config = ProviderConfig(provider="openai", api_key="test-key")
         adapter = AsyncOpenAIAdapter(config)
+
+        # Check it has required attributes/methods
+        assert hasattr(adapter, "name")
+        assert hasattr(adapter, "config")
+        assert hasattr(adapter, "send")
+        assert hasattr(adapter, "stream")
+        assert hasattr(adapter, "validate")
+
+    def test_async_anthropic_adapter_implements_protocol(self):
+        """AsyncAnthropicAdapter should implement IAsyncLLMProviderPort."""
+        from forge_llm.infrastructure.providers import AsyncAnthropicAdapter
+
+        config = ProviderConfig(provider="anthropic", api_key="test-key")
+        adapter = AsyncAnthropicAdapter(config)
 
         # Check it has required attributes/methods
         assert hasattr(adapter, "name")
