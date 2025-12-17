@@ -2,6 +2,16 @@
 
 Unified LLM client with provider portability. Write once, run on any provider.
 
+## Features
+
+- **Provider Portability**: Same code works with OpenAI, Anthropic, Ollama, and OpenRouter
+- **Async Support**: Non-blocking async/await API for high-throughput applications
+- **Tool Calling**: Define custom tools that LLMs can invoke automatically
+- **Session Management**: Automatic context window management with compaction strategies
+- **Streaming**: Real-time response streaming with tool support
+- **Structured Logging**: JSON logging with correlation IDs for observability
+- **Type Safety**: Full mypy strict type checking support
+
 ## Installation
 
 ```bash
@@ -9,11 +19,11 @@ Unified LLM client with provider portability. Write once, run on any provider.
 git clone <repo-url>
 cd forge_llm
 
-# Install in development mode
-pip install -e .
+# Install with Poetry
+poetry install
 
-# Or with dev dependencies
-pip install -e ".[dev]"
+# Or with pip
+pip install -e .
 ```
 
 ## Quick Start
@@ -41,6 +51,27 @@ agent = ChatAgent(provider="anthropic", api_key="sk-ant-...")
 
 for chunk in agent.stream_chat("Tell me a story"):
     print(chunk.content, end="", flush=True)
+```
+
+### Async API
+
+```python
+import asyncio
+from forge_llm.application.agents import AsyncChatAgent
+from forge_llm.domain.entities import ProviderConfig
+
+async def main():
+    config = ProviderConfig(provider="openai", api_key="sk-...", model="gpt-4o")
+    agent = AsyncChatAgent(config)
+
+    # Single async call
+    response = await agent.chat("Hello!")
+
+    # Concurrent requests
+    tasks = [agent.chat(q) for q in ["Q1?", "Q2?", "Q3?"]]
+    responses = await asyncio.gather(*tasks)
+
+asyncio.run(main())
 ```
 
 ### Session Management
@@ -75,11 +106,6 @@ def get_weather(location: str) -> str:
     """Get weather for a location."""
     return f"Sunny, 25C in {location}"
 
-@registry.tool
-def calculate(expression: str) -> str:
-    """Calculate a math expression."""
-    return str(eval(expression))
-
 agent = ChatAgent(provider="openai", api_key="sk-...", tools=registry)
 
 # Tools are automatically called
@@ -87,35 +113,63 @@ response = agent.chat("What's the weather in London?")
 print(response.content)  # Uses get_weather tool
 ```
 
-### Error Handling
+### OpenRouter (Multi-Provider Access)
 
 ```python
 from forge_llm import ChatAgent
-from forge_llm.domain import (
-    ProviderNotConfiguredError,
-    InvalidMessageError,
-    AuthenticationError,
-    ContextOverflowError,
+
+# Access any model through OpenRouter
+agent = ChatAgent(
+    provider="openrouter",
+    api_key="sk-or-...",  # OpenRouter API key
+    model="anthropic/claude-3-haiku",  # Or openai/gpt-4, meta-llama/llama-3, etc.
 )
 
-try:
-    agent = ChatAgent(provider="openai")  # No API key
-    agent.chat("Hello")
-except ProviderNotConfiguredError as e:
-    print(f"Configure your API key: {e}")
+response = agent.chat("Hello!")
+```
 
-try:
-    agent.chat("")  # Empty message
-except InvalidMessageError as e:
-    print(f"Invalid input: {e}")
+### Local LLMs with Ollama
+
+```python
+from forge_llm import ChatAgent
+
+# Use local models via Ollama
+agent = ChatAgent(
+    provider="ollama",
+    model="llama3",
+    base_url="http://localhost:11434",
+)
+
+response = agent.chat("Write a haiku about coding")
+```
+
+### Structured Logging
+
+```python
+from forge_llm.infrastructure.logging import LogService, configure_logging
+
+# Configure JSON logging
+configure_logging(json_output=True, log_level="INFO")
+
+logger = LogService("my_app")
+
+# Use correlation IDs for request tracing
+with LogService.correlation_context() as correlation_id:
+    logger.info("Processing request", user_id="123")
+
+    # Time operations
+    with LogService.timed("llm_call", provider="openai"):
+        response = agent.chat("Hello")
 ```
 
 ## Supported Providers
 
-| Provider | Models |
-|----------|--------|
-| OpenAI | gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo, o1-preview, o1-mini |
-| Anthropic | claude-3-opus, claude-3-sonnet, claude-3-haiku, claude-3-5-sonnet |
+| Provider | Models | Notes |
+|----------|--------|-------|
+| OpenAI | gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo, o1-preview, o1-mini | Direct API |
+| Anthropic | claude-3-opus, claude-3-sonnet, claude-3-haiku, claude-3-5-sonnet | Direct API |
+| Ollama | llama3, mistral, codellama, and any Ollama model | Local deployment |
+| OpenRouter | 100+ models from OpenAI, Anthropic, Google, Meta, Mistral | Unified API |
 
 ## Architecture
 
@@ -128,33 +182,41 @@ src/forge_llm/
 │   ├── value_objects/     # ChatResponse, TokenUsage, ResponseMetadata
 │   └── exceptions.py      # Domain-specific errors
 ├── application/           # Use cases and orchestration
-│   ├── agents/           # ChatAgent - main entry point
-│   ├── ports/            # Interfaces (ILLMProviderPort, IToolPort)
-│   ├── session/          # ChatSession, Compactors
+│   ├── agents/           # ChatAgent, AsyncChatAgent
+│   ├── ports/            # Interfaces (ILLMProviderPort, IAsyncLLMProviderPort)
+│   ├── session/          # ChatSession, TruncateCompactor, SummarizeCompactor
 │   └── tools/            # ToolRegistry
 └── infrastructure/        # External integrations
-    ├── providers/        # OpenAIAdapter, AnthropicAdapter
-    └── storage/          # MemorySessionStorage
+    ├── providers/        # OpenAIAdapter, AnthropicAdapter, OllamaAdapter, etc.
+    ├── logging.py        # Structured JSON logging with structlog
+    └── resilience.py     # Retry with exponential backoff
 ```
 
-### Key Design Principles
+## Examples
 
-1. **Provider Portability**: Same code works with any LLM provider
-2. **Protocol-based Interfaces**: Easy to add new providers
-3. **Immutable Value Objects**: Thread-safe response handling
-4. **Dependency Injection**: Testable and configurable components
+See the `examples/` directory for complete examples:
+
+- `basic_chat.py` - Getting started with basic chat
+- `async_chat.py` - Async/await patterns
+- `tool_calling.py` - Custom tool definitions
+- `openrouter_usage.py` - Multi-provider access
+- `session_compaction.py` - Context management strategies
+- `structured_logging.py` - Production logging setup
 
 ## Development
 
 ```bash
 # Run tests
-PYTHONPATH=src pytest
-
-# Run specific test file
-PYTHONPATH=src pytest tests/unit/test_chat_agent.py -v
+pytest tests/ -v
 
 # Run with coverage
-PYTHONPATH=src pytest --cov=forge_llm
+pytest --cov=forge_llm --cov-report=html
+
+# Type checking
+mypy src/forge_llm --strict
+
+# Linting
+ruff check src/ tests/
 ```
 
 ## License
