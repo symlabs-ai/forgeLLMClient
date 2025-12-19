@@ -278,3 +278,30 @@ def test_stream_with_tools():
 
 - OpenAI Function Calling: https://platform.openai.com/docs/guides/function-calling
 - OpenAI API Reference: https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
+
+---
+
+## Resolution
+
+**Status:** Resolved
+**Date:** 2025-12-19
+**Fix Version:** 0.4.1
+
+The issue has been resolved by addressing the root causes in both `OpenAIAdapter` and `ChatAgent`.
+
+### Applied Fixes
+
+1.  **OpenAIAdapter (Non-Streaming Fix)**
+    *   Updated `send()` method to correctly extract `tools` from the configuration and pass them to the OpenAI API client.
+    *   Added logic to parse `tool_calls` from the API response and include them in the return dictionary.
+
+2.  **ChatAgent (Streaming Fix)**
+    *   Updated `_stream_with_tools()` to ensure that `tool_calls` data received from the provider is correctly included in the `ChatChunk` yielded to the caller, specifically when `auto_execute_tools=False`. This ensures tool call requests are not swallowed during streaming.
+
+### Verification
+
+*   Created and executed a reproduction script that confirmed both the missing tools in non-streaming mode and the missing tool call chunks in streaming mode.
+*   Implemented unit tests `test_send_with_tools` and `test_stream_with_tools` in `tests/unit/test_openai_adapter.py`.
+*   Verified that all tests pass successfully.
+
+Gemini - Equipe ForgeLLM
