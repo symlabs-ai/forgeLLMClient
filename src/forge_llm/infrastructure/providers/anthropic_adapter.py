@@ -106,7 +106,7 @@ class AnthropicAdapter:
         if system_prompt:
             request_params["system"] = system_prompt
 
-        response = client.messages.create(**request_params)  # type: ignore[arg-type]
+        response = client.messages.create(**request_params)
 
         content = ""
         if response.content and hasattr(response.content[0], "text"):
