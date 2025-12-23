@@ -252,10 +252,11 @@ class AsyncAnthropicAdapter:
         self, messages: list[dict[str, Any]]
     ) -> tuple[str | None, list[dict[str, Any]]]:
         """
-        Extract system messages from message list.
+        Extract system messages and convert to Anthropic format.
 
         Anthropic API requires system prompt as separate parameter,
-        not as a message with role "system".
+        not as a message with role "system". Also converts tool-related
+        messages to Anthropic format.
 
         Args:
             messages: List of messages with roles
@@ -275,7 +276,94 @@ class AsyncAnthropicAdapter:
                 filtered.append(msg)
 
         system_prompt = "\n\n".join(system_parts) if system_parts else None
-        return system_prompt, filtered
+        # Convert tool-related messages to Anthropic format
+        converted = self._convert_messages_to_anthropic(filtered)
+        return system_prompt, converted
+
+    def _convert_messages_to_anthropic(
+        self, messages: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """
+        Convert OpenAI format messages to Anthropic format.
+
+        Handles:
+        - assistant messages with tool_calls -> content with tool_use blocks
+        - tool messages -> user messages with tool_result blocks
+
+        Args:
+            messages: List of messages in OpenAI format
+
+        Returns:
+            List of messages in Anthropic format
+        """
+        converted: list[dict[str, Any]] = []
+        tool_results: list[dict[str, Any]] = []
+
+        for msg in messages:
+            role = msg.get("role")
+
+            # Convert assistant message with tool_calls
+            if role == "assistant" and msg.get("tool_calls"):
+                content_blocks: list[dict[str, Any]] = []
+
+                # Add text content if present
+                if msg.get("content"):
+                    content_blocks.append({
+                        "type": "text",
+                        "text": msg["content"],
+                    })
+
+                # Convert tool_calls to tool_use blocks
+                for tc in msg["tool_calls"]:
+                    func = tc.get("function", {})
+                    arguments = func.get("arguments", "{}")
+                    # Parse arguments if string
+                    if isinstance(arguments, str):
+                        try:
+                            arguments = json.loads(arguments)
+                        except json.JSONDecodeError:
+                            arguments = {}
+
+                    content_blocks.append({
+                        "type": "tool_use",
+                        "id": tc.get("id", ""),
+                        "name": func.get("name", ""),
+                        "input": arguments,
+                    })
+
+                converted.append({
+                    "role": "assistant",
+                    "content": content_blocks,
+                })
+
+            # Collect tool messages to combine into user message
+            elif role == "tool":
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": msg.get("tool_call_id", ""),
+                    "content": msg.get("content", ""),
+                })
+
+            # Regular message - flush any pending tool results first
+            else:
+                if tool_results:
+                    converted.append({
+                        "role": "user",
+                        "content": tool_results,
+                    })
+                    tool_results = []
+
+                # Pass through regular messages
+                converted.append(msg)
+
+        # Flush any remaining tool results
+        if tool_results:
+            converted.append({
+                "role": "user",
+                "content": tool_results,
+            })
+
+        return converted
 
     def _convert_tools_to_anthropic(
         self, tools: list[dict[str, Any]]

@@ -132,3 +132,109 @@ class TestAnthropicAdapter:
         assert len(chunks) == 2
         assert chunks[0]["content"] == "Hello"
         assert chunks[1]["content"] == " World"
+
+
+class TestAnthropicMessageConversion:
+    """Tests for message format conversion."""
+
+    def test_convert_assistant_with_tool_calls(self):
+        """Assistant messages with tool_calls convert to tool_use blocks."""
+        config = ProviderConfig(provider="anthropic", api_key="test-key")
+        adapter = AnthropicAdapter(config)
+
+        messages = [
+            {"role": "user", "content": "What's the weather?"},
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_123",
+                        "type": "function",
+                        "function": {
+                            "name": "get_weather",
+                            "arguments": '{"location": "Tokyo"}',
+                        },
+                    }
+                ],
+            },
+        ]
+
+        converted = adapter._convert_messages_to_anthropic(messages)
+
+        assert len(converted) == 2
+        assert converted[0] == {"role": "user", "content": "What's the weather?"}
+        assert converted[1]["role"] == "assistant"
+        assert len(converted[1]["content"]) == 1
+        assert converted[1]["content"][0]["type"] == "tool_use"
+        assert converted[1]["content"][0]["id"] == "call_123"
+        assert converted[1]["content"][0]["name"] == "get_weather"
+        assert converted[1]["content"][0]["input"] == {"location": "Tokyo"}
+
+    def test_convert_tool_messages_to_user_with_tool_result(self):
+        """Tool messages convert to user messages with tool_result blocks."""
+        config = ProviderConfig(provider="anthropic", api_key="test-key")
+        adapter = AnthropicAdapter(config)
+
+        messages = [
+            {"role": "tool", "tool_call_id": "call_123", "content": "22°C, sunny"},
+        ]
+
+        converted = adapter._convert_messages_to_anthropic(messages)
+
+        assert len(converted) == 1
+        assert converted[0]["role"] == "user"
+        assert len(converted[0]["content"]) == 1
+        assert converted[0]["content"][0]["type"] == "tool_result"
+        assert converted[0]["content"][0]["tool_use_id"] == "call_123"
+        assert converted[0]["content"][0]["content"] == "22°C, sunny"
+
+    def test_convert_full_tool_conversation(self):
+        """Full tool calling conversation converts correctly."""
+        config = ProviderConfig(provider="anthropic", api_key="test-key")
+        adapter = AnthropicAdapter(config)
+
+        messages = [
+            {"role": "user", "content": "What's the weather in Tokyo?"},
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_abc",
+                        "type": "function",
+                        "function": {
+                            "name": "get_weather",
+                            "arguments": '{"location": "Tokyo"}',
+                        },
+                    }
+                ],
+            },
+            {"role": "tool", "tool_call_id": "call_abc", "content": "22°C, sunny"},
+        ]
+
+        converted = adapter._convert_messages_to_anthropic(messages)
+
+        assert len(converted) == 3
+        # User message unchanged
+        assert converted[0] == {"role": "user", "content": "What's the weather in Tokyo?"}
+        # Assistant with tool_use
+        assert converted[1]["role"] == "assistant"
+        assert converted[1]["content"][0]["type"] == "tool_use"
+        # Tool result as user message
+        assert converted[2]["role"] == "user"
+        assert converted[2]["content"][0]["type"] == "tool_result"
+
+    def test_regular_messages_pass_through(self):
+        """Regular messages without tools pass through unchanged."""
+        config = ProviderConfig(provider="anthropic", api_key="test-key")
+        adapter = AnthropicAdapter(config)
+
+        messages = [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there!"},
+        ]
+
+        converted = adapter._convert_messages_to_anthropic(messages)
+
+        assert converted == messages
