@@ -11,6 +11,7 @@ ForgeLLM is a unified LLM client library providing provider portability across O
 | [Quickstart](./users/quickstart.md) | Get started in 5 minutes |
 | [API Reference](./users/api-reference.md) | Complete API documentation |
 | [Providers](./users/providers.md) | Provider-specific configuration |
+| [Multimodal](./users/multimodal.md) | Images and audio input |
 | [Tools](./users/tools.md) | Tool calling and function execution |
 | [Sessions](./users/sessions.md) | Conversation management |
 | [Streaming](./users/streaming.md) | Streaming responses |
@@ -57,6 +58,7 @@ pip install forge-llm
 ## Key Features
 
 - **Provider Portability**: Same code works with any provider
+- **Multimodal**: Send images (URL/Base64) and audio (WAV/MP3) to compatible models
 - **Tool Calling**: Register Python functions as LLM tools
 - **Session Management**: Automatic conversation history with compaction
 - **Streaming**: Real-time response streaming

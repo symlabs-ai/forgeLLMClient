@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2024-12-28
+
+### Added
+- **Multimodal Support (Images)** - Full image input support for vision models
+  - `ImageContent` value object with `from_url()` and `from_base64()` factory methods
+  - `TextContent` value object for explicit text blocks
+  - `ContentBlock` type alias for multimodal content
+  - `ChatMessage.user_with_image()` and `user_with_images()` factory methods
+  - `ChatMessage.has_images` property
+  - OpenAI conversion to `image_url` format
+  - Anthropic conversion to native image format
+  - Support for URL and Base64 image sources
+  - Detail level support (auto, low, high) for OpenAI
+
+- **Multimodal Support (Audio)** - Audio input support for speech models
+  - `AudioContent` value object with `from_base64()` and `from_file()` factory methods
+  - `ChatMessage.user_with_audio()` and `user_with_audios()` factory methods
+  - `ChatMessage.has_audio` property
+  - OpenAI conversion to `input_audio` format
+  - Supported formats: WAV, MP3 (Base64 encoded)
+  - Supported provider: OpenAI (gpt-4o-audio-preview)
+
+- **UnsupportedFeatureError** exception for provider-specific feature limitations
+  - Raised when attempting to use audio with Anthropic (not supported)
+
+- **Comprehensive tests** for multimodal content
+  - 33 tests for content value objects (TextContent, ImageContent, AudioContent)
+  - 30 tests for ChatMessage multimodal support
+  - Tests for serialization, deserialization, and provider format conversion
+
+### Changed
+- Test suite expanded to 576+ unit tests
+- `ContentBlock` type alias now includes `AudioContent`
+
 ## [0.4.0] - 2024-12-17
 
 ### Added

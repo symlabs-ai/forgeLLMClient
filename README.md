@@ -1,9 +1,9 @@
 # ForgeLLM
 
-[![Tests](https://img.shields.io/badge/tests-542%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-576%20passing-brightgreen)]()
 [![Coverage](https://img.shields.io/badge/coverage-80%25-green)]()
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)]()
-[![Version](https://img.shields.io/badge/version-0.4.0-blue)]()
+[![Version](https://img.shields.io/badge/version-0.5.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)]()
 
 Unified LLM client with provider portability. Write once, run on any provider.
@@ -33,6 +33,7 @@ Documentação completa: [docs/product/agents/](./docs/product/agents/)
 ## Features
 
 - **Provider Portability**: Same code works with OpenAI, Anthropic, Ollama, and OpenRouter
+- **Multimodal Support**: Send images (URL/Base64) and audio (WAV/MP3) to vision and speech models
 - **Async Support**: Non-blocking async/await API for high-throughput applications
 - **Tool Calling**: Define custom tools that LLMs can invoke automatically
 - **Session Management**: Automatic context window management with compaction strategies
@@ -165,6 +166,57 @@ response = agent.chat("What's the weather in London?")
 print(response.content)  # Uses get_weather tool
 ```
 
+### Vision (Images)
+
+```python
+from forge_llm import ChatAgent, ChatMessage, ImageContent
+
+agent = ChatAgent(provider="openai", api_key="sk-...", model="gpt-4o")
+
+# From URL
+img = ImageContent.from_url("https://example.com/image.png")
+msg = ChatMessage.user_with_image("What's in this image?", img)
+response = agent.chat([msg])
+
+# From Base64
+import base64
+with open("photo.jpg", "rb") as f:
+    data = base64.b64encode(f.read()).decode()
+
+img = ImageContent.from_base64(data=data, media_type="image/jpeg")
+msg = ChatMessage.user_with_image("Describe this photo", img)
+response = agent.chat([msg])
+
+# Multiple images
+images = [
+    ImageContent.from_url("https://example.com/1.png"),
+    ImageContent.from_url("https://example.com/2.png"),
+]
+msg = ChatMessage.user_with_images("Compare these images", images)
+```
+
+### Audio Input
+
+```python
+from forge_llm import ChatAgent, ChatMessage, AudioContent
+
+# Audio only supported by OpenAI (gpt-4o-audio-preview)
+agent = ChatAgent(provider="openai", api_key="sk-...", model="gpt-4o-audio-preview")
+
+# From file (WAV or MP3)
+audio = AudioContent.from_file("recording.wav")
+msg = ChatMessage.user_with_audio("Transcribe this audio", audio)
+response = agent.chat([msg])
+
+# From Base64
+import base64
+with open("speech.mp3", "rb") as f:
+    data = base64.b64encode(f.read()).decode()
+
+audio = AudioContent.from_base64(data=data, format="mp3")
+msg = ChatMessage.user_with_audio("What is being said?", audio)
+```
+
 ### OpenRouter (Multi-Provider Access)
 
 ```python
@@ -216,12 +268,12 @@ with LogService.correlation_context() as correlation_id:
 
 ## Supported Providers
 
-| Provider | Models | Notes |
-|----------|--------|-------|
-| OpenAI | gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo, o1-preview, o1-mini | Direct API |
-| Anthropic | claude-3-opus, claude-3-sonnet, claude-3-haiku, claude-3-5-sonnet | Direct API |
-| Ollama | llama3, mistral, codellama, and any Ollama model | Local deployment |
-| OpenRouter | 100+ models from OpenAI, Anthropic, Google, Meta, Mistral | Unified API |
+| Provider | Models | Vision | Audio | Notes |
+|----------|--------|--------|-------|-------|
+| OpenAI | gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo, o1-preview, o1-mini | ✅ | ✅ (gpt-4o-audio-preview) | Direct API |
+| Anthropic | claude-3-opus, claude-3-sonnet, claude-3-haiku, claude-3-5-sonnet | ✅ | ❌ | Direct API |
+| Ollama | llama3, mistral, codellama, and any Ollama model | ⚠️ | ❌ | Local deployment |
+| OpenRouter | 100+ models from OpenAI, Anthropic, Google, Meta, Mistral | ⚠️ | ⚠️ | Depends on model |
 
 ## Architecture
 
