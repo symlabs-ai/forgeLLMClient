@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "forge-llm"
-version = "0.4.4"
+version = "0.5.0"
 description = "Unified LLM client with provider portability"
 authors = ["ForgeTeam"]
 readme = "README.md"
